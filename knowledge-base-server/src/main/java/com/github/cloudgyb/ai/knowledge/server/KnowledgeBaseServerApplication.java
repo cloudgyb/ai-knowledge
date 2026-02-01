@@ -1,13 +1,13 @@
-package com.github.cloudgyb.ai.knowledge;
+package com.github.cloudgyb.ai.knowledge.server;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class AiKnowledgeApplication {
+public class KnowledgeBaseServerApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(AiKnowledgeApplication.class, args);
+        SpringApplication.run(KnowledgeBaseServerApplication.class, args);
     }
 
 }
