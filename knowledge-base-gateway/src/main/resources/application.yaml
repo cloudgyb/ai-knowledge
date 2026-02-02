@@ -9,4 +9,22 @@ spring:
         enabled: true
         server-addr: 127.0.0.1:8848
         namespace: public
-        register-enabled: false
+        register-enabled: true # 是否注册为服务
+        username: nacos
+        password: nacos
+    gateway:
+      server:
+        webflux:
+          routes:
+            - id: knowledge-base-service
+              uri: lb://knowledge-base-server
+              predicates:
+                - Path=/api/**
+              filters:
+                - name: StripPrefix
+                  args: {
+                    parts: 1
+                  }
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: GMT+8

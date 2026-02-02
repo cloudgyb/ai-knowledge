@@ -7,8 +7,8 @@ spring:
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     username: root
-    password: 123456
-    url: jdbc:mysql://localhost:13306/knowledge_base?useUnicode=true&characterEncoding=utf-8&useSSL=false&allowPublicKeyRetrieval=true&zeroDateTimeBehavior=convertToNull&transformedBitIsBoolean=true&allowMultiQueries=true&tinyInt1isBit=false
+    password: BDsec2022,,
+    url: jdbc:mysql://10.66.11.210:3306/knowledge_base?useUnicode=true&characterEncoding=utf-8&useSSL=false&allowPublicKeyRetrieval=true&zeroDateTimeBehavior=convertToNull&transformedBitIsBoolean=true&allowMultiQueries=true&tinyInt1isBit=false
   jackson:
     date-format: 'yyyy-MM-dd HH:mm:ss'
     time-zone: GMT+8
@@ -18,6 +18,9 @@ spring:
         enabled: true
         server-addr: localhost:8848
         namespace: public
+        username: nacos
+        password: nacos
+        ip: 10.66.1.54
 mybatis-plus:
   configuration:
     log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
