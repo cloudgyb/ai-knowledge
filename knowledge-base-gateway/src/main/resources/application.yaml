@@ -25,6 +25,31 @@ spring:
                   args: {
                     parts: 1
                   }
+                - name: SetResponseHeader
+                  args: {
+                    name: "X-Request-Start",
+                    value: "hello"
+                  }
+                - name: CircuitBreaker
+                  args: {
+                    name: "knowledge-base-service",
+                    fallbackUri: "forward:/fallback",
+                    statusCodes: "404,500,503"
+                  }
   jackson:
     date-format: yyyy-MM-dd HH:mm:ss
     time-zone: GMT+8
+
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      knowledge-base-service:
+        wait-duration-in-open-state:
+          seconds: 20
+        failureRateThreshold: 50
+        slowCallDurationThreshold: 5s
+        slowCallRateThreshold: 50
+        sliding-window-type: COUNT_BASED
+        sliding-window-size: 100
+        permitted-number-of-calls-in-half-open-state: 5
