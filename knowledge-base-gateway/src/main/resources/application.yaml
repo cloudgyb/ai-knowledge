@@ -36,6 +36,9 @@ spring:
                     fallbackUri: "forward:/fallback",
                     statusCodes: "404,500,503"
                   }
+    openfeign:
+      okhttp:
+        enabled: true
   jackson:
     date-format: yyyy-MM-dd HH:mm:ss
     time-zone: GMT+8
