@@ -56,3 +56,9 @@ resilience4j:
         sliding-window-type: COUNT_BASED
         sliding-window-size: 100
         permitted-number-of-calls-in-half-open-state: 5
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: '*'
