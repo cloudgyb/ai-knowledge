@@ -12,9 +12,18 @@ spring:
         register-enabled: true # 是否注册为服务
         username: nacos
         password: nacos
+        cluster-name: DEFAULT
+        metadata: {
+          "nacos.discovery.metadata.region": "cn-hangzhou",
+        }
     gateway:
       server:
         webflux:
+          #global-filter:
+          #  adapt-cached-body:
+          #    enabled: true
+          #  reactive-load-balancer-client:
+          #    enabled: true
           routes:
             - id: knowledge-base-service
               uri: lb://knowledge-base-server
@@ -39,6 +48,9 @@ spring:
     openfeign:
       okhttp:
         enabled: true
+    loadbalancer:
+      nacos:
+        enabled: true
   jackson:
     date-format: yyyy-MM-dd HH:mm:ss
     time-zone: GMT+8
@@ -62,3 +74,7 @@ management:
     web:
       exposure:
         include: '*'
+
+logging:
+  level:
+    org.springframework.cloud.gateway.filter.ReactiveLoadBalancerClientFilter: trace
