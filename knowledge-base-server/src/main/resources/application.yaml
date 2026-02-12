@@ -21,6 +21,8 @@ spring:
         username: nacos
         password: nacos
         ip: 10.66.1.54
+        weight: 1
+        cluster-name: DEFAULT
 mybatis-plus:
   configuration:
     log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
