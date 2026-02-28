@@ -1,8 +1,8 @@
-package com.github.cloudgyb.ai.knowledge.server.service;
+package com.github.cloudgyb.ai.knowledge.server.modules.sys.user.service;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.github.cloudgyb.ai.knowledge.server.entity.SysUserEntity;
-import com.github.cloudgyb.ai.knowledge.server.mapper.SysUserEntityMapper;
+import com.github.cloudgyb.ai.knowledge.server.modules.sys.user.entity.SysUserEntity;
+import com.github.cloudgyb.ai.knowledge.server.modules.sys.user.mapper.SysUserEntityMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

@@ -1,7 +1,7 @@
-package com.github.cloudgyb.ai.knowledge.server.mapper;
+package com.github.cloudgyb.ai.knowledge.server.modules.sys.user.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.github.cloudgyb.ai.knowledge.server.entity.SysUserEntity;
+import com.github.cloudgyb.ai.knowledge.server.modules.sys.user.entity.SysUserEntity;
 import org.apache.ibatis.annotations.Mapper;
 
 /**

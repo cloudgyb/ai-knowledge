@@ -1,13 +1,11 @@
-package com.github.cloudgyb.ai.knowledge.server.controller;
+package com.github.cloudgyb.ai.knowledge.server.modules.sys.user.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.github.cloudgyb.ai.knowledge.server.entity.SysUserEntity;
-import com.github.cloudgyb.ai.knowledge.server.service.SysUserService;
+import com.github.cloudgyb.ai.knowledge.server.modules.sys.user.entity.SysUserEntity;
+import com.github.cloudgyb.ai.knowledge.server.modules.sys.user.service.SysUserService;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.util.List;
 
 /**
  * @author cloudgyb

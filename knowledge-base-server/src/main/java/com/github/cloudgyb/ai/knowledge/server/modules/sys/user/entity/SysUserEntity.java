@@ -1,4 +1,4 @@
-package com.github.cloudgyb.ai.knowledge.server.entity;
+package com.github.cloudgyb.ai.knowledge.server.modules.sys.user.entity;
 
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
