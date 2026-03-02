@@ -11,7 +11,7 @@
  Target Server Version : 80407 (8.4.7)
  File Encoding         : 65001
 
- Date: 28/02/2026 16:16:31
+ Date: 02/03/2026 17:58:48
 */
 
 SET NAMES utf8mb4;
@@ -58,10 +58,51 @@ CREATE TABLE `ai_model_config`  (
   `create_time` datetime NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
   `update_time` datetime NULL DEFAULT NULL,
   PRIMARY KEY (`id`) USING BTREE
-) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '用户自定义的 AI 模型高级配置，包含模型温度、最大回复等' ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '用户自定义的 AI 模型高级配置，包含模型温度、最大回复等' ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of ai_model_config
+-- ----------------------------
+
+-- ----------------------------
+-- Table structure for knowledge_base
+-- ----------------------------
+DROP TABLE IF EXISTS `knowledge_base`;
+CREATE TABLE `knowledge_base`  (
+  `id` int UNSIGNED NOT NULL AUTO_INCREMENT,
+  `name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL DEFAULT '' COMMENT '知识库名称',
+  `remark` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT '' COMMENT '知识库描述',
+  `ai_vector_model_id` int NULL DEFAULT NULL COMMENT 'AI 向量模型id，关联 ai_model 表',
+  `status` tinyint NOT NULL DEFAULT 0 COMMENT '状态：0 禁用 1启用',
+  `type` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL DEFAULT '' COMMENT '类型，支持知识库和记忆库',
+  `create_time` datetime NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+  `update_time` datetime NULL DEFAULT NULL,
+  PRIMARY KEY (`id`) USING BTREE
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '用户自定义的知识库存储表' ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Records of knowledge_base
+-- ----------------------------
+
+-- ----------------------------
+-- Table structure for knowledge_base_doc
+-- ----------------------------
+DROP TABLE IF EXISTS `knowledge_base_doc`;
+CREATE TABLE `knowledge_base_doc`  (
+  `id` int UNSIGNED NOT NULL AUTO_INCREMENT,
+  `kb_id` int NOT NULL COMMENT '关联的知识库id，对应 knowledge_base 表的 id 字段',
+  `name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '文档名称',
+  `filename` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT '' COMMENT '文件名',
+  `filepath` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT '' COMMENT '文件路径',
+  `file_type` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT '' COMMENT '文件类型',
+  `doc_type` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT '' COMMENT '文档类型，支持单文件，压缩文件和文本内容',
+  `create_time` datetime NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+  `update_time` datetime NULL DEFAULT NULL,
+  PRIMARY KEY (`id`) USING BTREE
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '知识库关联的文档存储表' ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Records of knowledge_base_doc
 -- ----------------------------
 
 -- ----------------------------
