@@ -29,12 +29,6 @@ Usage notes:
 </skill>
 
 <skill>
-<name>api-doc-generator</name>
-<description>为项目生成API文档</description>
-<location>project</location>
-</skill>
-
-<skill>
 <name>brand-guidelines</name>
 <description>Applies Anthropic's official brand colors and typography to any sort of artifact that may benefit from having Anthropic's look-and-feel. Use it when brand colors or style guidelines, visual formatting, or company design standards apply.</description>
 <location>project</location>
