@@ -1,5 +1,8 @@
 package com.github.cloudgyb.ai.knowledge.server.modules.kb.service;
 
+import com.baomidou.mybatisplus.core.conditions.Wrapper;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.github.cloudgyb.ai.knowledge.server.modules.ai.domain.AiModel;
 import com.github.cloudgyb.ai.knowledge.server.modules.ai.service.AiModelService;
 import com.github.cloudgyb.ai.knowledge.server.modules.kb.domain.KnowledgeBase;
@@ -43,5 +46,18 @@ public class KnowledgeBaseManageService {
             return;
         }
         throw new RuntimeException("向量模型不存在");
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public void updateKnowledgeBase(KnowledgeBaseAddDTO dto) {
+        KnowledgeBase knowledgeBase = dto.toKnowledgeBase();
+        knowledgeBase.setUpdateTime(new Date());
+        knowledgeBaseService.updateById(knowledgeBase);
+    }
+
+    public Page<KnowledgeBase> page(Integer pageNum, Integer pageSize, String name) {
+        Wrapper<KnowledgeBase> queryWrapper = name != null ?
+                new LambdaQueryWrapper<KnowledgeBase>().like(KnowledgeBase::getName, name) : null;
+        return knowledgeBaseService.page(new Page<>(pageNum, pageSize), queryWrapper);
     }
 }

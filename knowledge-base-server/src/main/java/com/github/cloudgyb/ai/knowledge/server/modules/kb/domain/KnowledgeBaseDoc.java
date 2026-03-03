@@ -27,8 +27,8 @@ public class KnowledgeBaseDoc {
     /**
      * 文档名称
      */
-    @TableField(value = "name")
-    private String name;
+    @TableField(value = "title")
+    private String title;
 
     /**
      * 文件名
@@ -53,6 +53,12 @@ public class KnowledgeBaseDoc {
      */
     @TableField(value = "doc_type")
     private String docType;
+
+    /**
+     * 文件向量化状态
+     */
+    @TableField(value = "status")
+    private String status;
 
     /**
      *
@@ -94,18 +100,20 @@ public class KnowledgeBaseDoc {
         this.kbId = kbId;
     }
 
-    /**
-     * 文档名称
-     */
-    public String getName() {
-        return name;
+    public String getTitle() {
+        return title;
     }
 
-    /**
-     * 文档名称
-     */
-    public void setName(String name) {
-        this.name = name;
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
     }
 
     /**

@@ -21,4 +21,12 @@
         ,provider_name,provider_company,model_url,logo_url,create_time,
         update_time,deleted
     </sql>
+    <select id="getProvidersByModelType"
+            resultType="com.github.cloudgyb.ai.knowledge.server.modules.sys.ai.domain.SysAiModelProvider">
+        select
+        <include refid="Base_Column_List"/>
+        from sys_ai_model_provider where id in(
+        select distinct provider_id from sys_ai_model where model_type=#{modelType}
+        )
+    </select>
 </mapper>

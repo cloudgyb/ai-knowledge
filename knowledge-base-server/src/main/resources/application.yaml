@@ -26,3 +26,22 @@ spring:
 mybatis-plus:
   configuration:
     log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+
+
+
+knowledge-base:
+  doc:
+    storage:
+      path: /data/knowledge-base/doc
+
+ai:
+  embedding:
+    storage:
+      pgvector:
+        host: localhost
+        port: 5432
+        database: postgres
+        user: postgres
+        password: postgres
+        table: embedding_store
+        metadataStorageMode: COMBINED_JSON

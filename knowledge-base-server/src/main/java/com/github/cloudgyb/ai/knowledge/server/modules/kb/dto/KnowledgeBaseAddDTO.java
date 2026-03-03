@@ -1,5 +1,6 @@
 package com.github.cloudgyb.ai.knowledge.server.modules.kb.dto;
 
+import com.github.cloudgyb.ai.knowledge.server.modules.commons.validation.Group;
 import com.github.cloudgyb.ai.knowledge.server.modules.kb.KnowledgeBaseType;
 import com.github.cloudgyb.ai.knowledge.server.modules.kb.domain.KnowledgeBase;
 import jakarta.validation.constraints.NotBlank;
@@ -15,6 +16,7 @@ import java.util.Date;
  * @since 2026/3/2 21:56
  */
 public class KnowledgeBaseAddDTO {
+    @NotNull(message = "id不能为空", groups = {Group.Update.class})
     private Integer id;
 
     /**
@@ -102,7 +104,6 @@ public class KnowledgeBaseAddDTO {
         kb.setAiVectorModelId(this.aiVectorModelId);
         kb.setStatus(this.status);
         kb.setType(this.type.getType());
-        kb.setCreateTime(new Date());
         return kb;
     }
 }

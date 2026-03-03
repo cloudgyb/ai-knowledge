@@ -3,6 +3,8 @@ package com.github.cloudgyb.ai.knowledge.server.modules.sys.ai.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.github.cloudgyb.ai.knowledge.server.modules.sys.ai.domain.SysAiModelProvider;
 
+import java.util.List;
+
 /**
  * 针对表【sys_ai_model_provider】的数据库操作Mapper
  *
@@ -11,6 +13,7 @@ import com.github.cloudgyb.ai.knowledge.server.modules.sys.ai.domain.SysAiModelP
  */
 public interface SysAiModelProviderMapper extends BaseMapper<SysAiModelProvider> {
 
+    List<SysAiModelProvider> getProvidersByModelType(String modelType);
 }
 
 
