@@ -22,6 +22,12 @@ public class SysAiModelProvider {
     private String providerName;
 
     /**
+     * 模型提供Code
+     */
+    @TableField(value = "provider_code")
+    private String providerCode;
+
+    /**
      * 模型提供商公司名称
      */
     @TableField(value = "provider_company")
@@ -83,6 +89,14 @@ public class SysAiModelProvider {
      */
     public void setProviderName(String providerName) {
         this.providerName = providerName;
+    }
+
+    public String getProviderCode() {
+        return providerCode;
+    }
+
+    public void setProviderCode(String providerCode) {
+        this.providerCode = providerCode;
     }
 
     /**
