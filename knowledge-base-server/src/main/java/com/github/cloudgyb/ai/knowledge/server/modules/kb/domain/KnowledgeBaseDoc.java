@@ -1,9 +1,6 @@
 package com.github.cloudgyb.ai.knowledge.server.modules.kb.domain;
 
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.annotation.*;
 
 import java.util.Date;
 
@@ -61,15 +58,21 @@ public class KnowledgeBaseDoc {
     private String status;
 
     /**
+     * 是否启用
+     */
+    @TableField(value = "enable")
+    private Boolean enable;
+
+    /**
      *
      */
-    @TableField(value = "create_time")
+    @TableField(value = "create_time", fill = FieldFill.INSERT)
     private Date createTime;
 
     /**
      *
      */
-    @TableField(value = "update_time")
+    @TableField(value = "update_time", fill = FieldFill.INSERT_UPDATE)
     private Date updateTime;
 
     /**
@@ -198,5 +201,13 @@ public class KnowledgeBaseDoc {
      */
     public void setUpdateTime(Date updateTime) {
         this.updateTime = updateTime;
+    }
+
+    public Boolean getEnable() {
+        return enable;
+    }
+
+    public void setEnable(Boolean enable) {
+        this.enable = enable;
     }
 }

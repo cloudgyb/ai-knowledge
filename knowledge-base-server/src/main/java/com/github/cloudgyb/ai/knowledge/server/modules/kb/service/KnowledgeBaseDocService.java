@@ -23,7 +23,10 @@ import dev.langchain4j.model.embedding.EmbeddingModel;
 import dev.langchain4j.model.output.Response;
 import dev.langchain4j.store.embedding.EmbeddingStore;
 import dev.langchain4j.store.embedding.filter.MetadataFilterBuilder;
+import jakarta.validation.constraints.NotNull;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
+import org.jspecify.annotations.NonNull;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -65,18 +68,11 @@ public class KnowledgeBaseDocService extends ServiceImpl<KnowledgeBaseDocMapper,
     @Transactional(rollbackFor = Exception.class)
     public int addDoc(Integer kbId, String title, MultipartFile file) {
         validateKbId(kbId);
-        String basePath = knowledgeBaseDocStorageProperties.getPath();
-        File saveDir = new File(basePath, String.valueOf(kbId));
-        File targetFile = new File(saveDir, file.getOriginalFilename() == null ? "" : file.getOriginalFilename());
-        try {
-            file.transferTo(targetFile);
-        } catch (IOException e) {
-            throw new RuntimeException("保存文件失败！", e);
-        }
+        File targetFile = saveFile(kbId, file);
         KnowledgeBaseDoc doc = new KnowledgeBaseDoc();
         doc.setTitle(title);
         doc.setFilename(file.getOriginalFilename());
-        doc.setFilepath(targetFile.getName());
+        doc.setFilepath(targetFile.getAbsolutePath());
         doc.setFileType(FilenameUtils.getExtension(file.getOriginalFilename()));
         doc.setDocType(DocType.FILE.name());
         doc.setKbId(kbId);
@@ -85,6 +81,18 @@ public class KnowledgeBaseDocService extends ServiceImpl<KnowledgeBaseDocMapper,
 
         threadPoolTaskExecutor.submit(() -> vectoringDoc(kbId, doc.getId(), targetFile));
         return doc.getId();
+    }
+
+    private File saveFile(Integer kbId, MultipartFile file) {
+        String basePath = knowledgeBaseDocStorageProperties.getPath();
+        File saveDir = new File(basePath, String.valueOf(kbId));
+        File targetFile = new File(saveDir, file.getOriginalFilename() == null ? "" : file.getOriginalFilename());
+        try {
+            file.transferTo(targetFile);
+        } catch (IOException e) {
+            throw new RuntimeException("保存文件失败！", e);
+        }
+        return targetFile;
     }
 
     private void vectoringDoc(Integer kbId, Integer docId, File targetFile) {
@@ -114,6 +122,13 @@ public class KnowledgeBaseDocService extends ServiceImpl<KnowledgeBaseDocMapper,
         Response<List<Embedding>> listResponse = embeddingModel.embedAll(textSegments);
         List<Embedding> embeddings = listResponse.content();
         embeddingStore.addAll(embeddings, textSegments);
+        KnowledgeBaseDoc knowledgeBaseDoc = new KnowledgeBaseDoc();
+        knowledgeBaseDoc.setId(docId);
+        knowledgeBaseDoc.setStatus(DocStatus.VECTORIZED.name());
+        boolean b = this.updateById(knowledgeBaseDoc);
+        if (!b) {
+            throw new RuntimeException("更新文档失败！");
+        }
     }
 
     private void validateKbId(Integer kbId) {
@@ -124,7 +139,80 @@ public class KnowledgeBaseDocService extends ServiceImpl<KnowledgeBaseDocMapper,
         throw new RuntimeException("知识库不存在");
     }
 
-    public void updateDoc(KnowledgeBaseAddDTO dto) {
+    @Transactional(rollbackFor = Exception.class)
+    public void updateDoc(Integer id, String title, Boolean enable, MultipartFile file) {
+        KnowledgeBaseDoc knowledgeBaseDoc = getById(id);
+        if (knowledgeBaseDoc == null) {
+            throw new RuntimeException("文档不存在");
+        }
+
+        KnowledgeBaseDoc updateKnowledgeBaseDoc = new KnowledgeBaseDoc();
+        updateKnowledgeBaseDoc.setId(id);
+        updateKnowledgeBaseDoc.setTitle(title);
+        updateKnowledgeBaseDoc.setEnable(enable);
+        if (file == null) {
+            boolean b = updateById(updateKnowledgeBaseDoc);
+            if (!b) {
+                throw new RuntimeException("更新文档失败！");
+            }
+        }
+        if (file != null) {
+            String filepath = knowledgeBaseDoc.getFilepath();
+            // 保证删除文件安全
+            if (filepath.startsWith(knowledgeBaseDocStorageProperties.getPath())) {
+                try {
+                    FileUtils.delete(new File(filepath));
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+            File savedFile = saveFile(knowledgeBaseDoc.getKbId(), file);
+            updateKnowledgeBaseDoc.setFilename(file.getOriginalFilename());
+            updateKnowledgeBaseDoc.setFilepath(savedFile.getAbsolutePath());
+            updateKnowledgeBaseDoc.setFileType(FilenameUtils.getExtension(file.getOriginalFilename()));
+            updateKnowledgeBaseDoc.setStatus(DocStatus.VECTORIZING.name());
+            boolean b = updateById(updateKnowledgeBaseDoc);
+            if (!b) {
+                throw new RuntimeException("更新文档失败！");
+            }
+            threadPoolTaskExecutor.submit(() -> vectoringDoc(knowledgeBaseDoc.getKbId(), id, savedFile));
+        }
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public void delDoc(@NotNull Integer id) {
+        KnowledgeBaseDoc knowledgeBaseDoc = getById(id);
+        if (knowledgeBaseDoc == null) {
+            throw new RuntimeException("文档不存在");
+        }
+        boolean b = removeById(id);
+        if (!b) {
+            throw new RuntimeException("删除文档失败！");
+        }
+        String filepath = knowledgeBaseDoc.getFilepath();
+        if (filepath.startsWith(knowledgeBaseDocStorageProperties.getPath())) {
+            try {
+                FileUtils.delete(new File(filepath));
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        KnowledgeBase knowledgeBase = knowledgeBaseService.getById(knowledgeBaseDoc.getKbId());
+        if (knowledgeBase == null) {
+            throw new RuntimeException("知识库不存在");
+        }
+        Integer aiVectorModelId = knowledgeBase.getAiVectorModelId();
+        AiModel aiModel = aiModelService.getById(aiVectorModelId);
+        if (aiModel == null) {
+            throw new RuntimeException("知识库AI向量模型不存在！");
+        }
+        String modelType = aiModel.getModelType();
+        if (!AiModelType.VECTOR.name().equals(modelType)) {
+            throw new RuntimeException("知识库AI向量模型类型不正确！");
+        }
+        EmbeddingModel embeddingModel = embeddingModelFactory.create(aiModel);
+        EmbeddingStore<TextSegment> embeddingStore = embeddingStoreFactory.create(embeddingModel.dimension());
+        embeddingStore.removeAll(MetadataFilterBuilder.metadataKey("docId").isEqualTo(id));
     }
 }
 

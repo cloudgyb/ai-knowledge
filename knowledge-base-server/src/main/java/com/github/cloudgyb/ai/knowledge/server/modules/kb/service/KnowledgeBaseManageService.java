@@ -7,6 +7,7 @@ import com.github.cloudgyb.ai.knowledge.server.modules.ai.domain.AiModel;
 import com.github.cloudgyb.ai.knowledge.server.modules.ai.service.AiModelService;
 import com.github.cloudgyb.ai.knowledge.server.modules.kb.domain.KnowledgeBase;
 import com.github.cloudgyb.ai.knowledge.server.modules.kb.dto.KnowledgeBaseAddDTO;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -56,7 +57,7 @@ public class KnowledgeBaseManageService {
     }
 
     public Page<KnowledgeBase> page(Integer pageNum, Integer pageSize, String name) {
-        Wrapper<KnowledgeBase> queryWrapper = name != null ?
+        Wrapper<KnowledgeBase> queryWrapper = StringUtils.isNotBlank(name) ?
                 new LambdaQueryWrapper<KnowledgeBase>().like(KnowledgeBase::getName, name) : null;
         return knowledgeBaseService.page(new Page<>(pageNum, pageSize), queryWrapper);
     }
