@@ -2,6 +2,7 @@ package com.github.cloudgyb.ai.knowledge.server.modules.sys.ai.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.github.cloudgyb.ai.knowledge.server.modules.sys.ai.domain.SysAiModelProvider;
+import org.apache.ibatis.annotations.Mapper;
 
 import java.util.List;
 
@@ -11,6 +12,7 @@ import java.util.List;
  * @author cloudgyb
  * @since 2026-02-28 13:55:55
  */
+@Mapper
 public interface SysAiModelProviderMapper extends BaseMapper<SysAiModelProvider> {
 
     List<SysAiModelProvider> getProvidersByModelType(String modelType);

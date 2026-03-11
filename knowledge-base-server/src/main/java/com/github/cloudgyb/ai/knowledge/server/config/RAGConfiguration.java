@@ -10,6 +10,8 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import java.util.Collections;
+
 /**
  * AI RAG 相关 bean 配置
  *
@@ -25,10 +27,11 @@ public class RAGConfiguration {
         return new AllMiniLmL6V2EmbeddingModel();
     }
 
-    @Bean
+   // @Bean
     public EmbeddingStore<TextSegment> embeddingStore(PgVectorEmbeddingStorageProperties properties) {
         DefaultMetadataStorageConfig storageConfig = DefaultMetadataStorageConfig.builder()
                 .storageMode(properties.getMetadataStorageMode())
+                .columnDefinitions(Collections.singletonList("metadata JSON NULL"))
                 .build();
         int dimension = embeddingModel().dimension();
         return PgVectorEmbeddingStore.builder()

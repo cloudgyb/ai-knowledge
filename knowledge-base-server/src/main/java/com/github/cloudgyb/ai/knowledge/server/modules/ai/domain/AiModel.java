@@ -257,4 +257,12 @@ public class AiModel {
     public void setDeleted(Integer deleted) {
         this.deleted = deleted;
     }
+
+    public Long getCreateUserId() {
+        return createUserId;
+    }
+
+    public void setCreateUserId(Long createUserId) {
+        this.createUserId = createUserId;
+    }
 }

@@ -1,6 +1,7 @@
 package com.github.cloudgyb.ai.knowledge.server.modules.sys.ai.controller;
 
 import com.github.cloudgyb.ai.knowledge.server.modules.ai.AiModelType;
+import com.github.cloudgyb.ai.knowledge.server.modules.commons.ApiResponse;
 import com.github.cloudgyb.ai.knowledge.server.modules.sys.ai.domain.SysAiModelProvider;
 import com.github.cloudgyb.ai.knowledge.server.modules.sys.ai.service.SysAiModelProviderService;
 import com.github.cloudgyb.ai.knowledge.server.modules.sys.ai.service.SysAiModelService;
@@ -21,20 +22,17 @@ import java.util.List;
 @RestController
 @RequestMapping("/sys/ai/model")
 public class SysAiModelController {
-    private final SysAiModelService sysAiModelService;
     private final SysAiModelProviderService sysAiModelProviderService;
 
-    public SysAiModelController(SysAiModelService sysAiModelService,
-                                SysAiModelProviderService sysAiModelProviderService) {
-        this.sysAiModelService = sysAiModelService;
+    public SysAiModelController(SysAiModelProviderService sysAiModelProviderService) {
         this.sysAiModelProviderService = sysAiModelProviderService;
     }
 
     @GetMapping("/providers")
-    public List<SysAiModelProvider> getAllProviders(@Param("modelType") AiModelType modelType) {
+    public ApiResponse<List<SysAiModelProvider>> getAllProviders(@Param("modelType") AiModelType modelType) {
         if (modelType != null)
-            return sysAiModelProviderService.getProvidersByModelType(modelType);
-        return sysAiModelProviderService.getAllProviders();
+            return ApiResponse.success(sysAiModelProviderService.getProvidersByModelType(modelType));
+        return ApiResponse.success(sysAiModelProviderService.getAllProviders());
     }
 
 }

@@ -8,10 +8,7 @@ import com.github.cloudgyb.ai.knowledge.server.modules.kb.dto.KnowledgeBaseAddDT
 import com.github.cloudgyb.ai.knowledge.server.modules.kb.service.KnowledgeBaseManageService;
 import org.apache.ibatis.annotations.Param;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 /**
  * 个人知识库管理
@@ -29,6 +26,7 @@ public class KnowledgeBaseManageController {
         this.knowledgeBaseManageService = knowledgeBaseManageService;
     }
 
+    @GetMapping("/list")
     public ApiResponse<Page<KnowledgeBase>> getKnowledgeBaseList(@Param("pageNum") Integer pageNum,
                                                                  @Param("pageSize") Integer pageSize,
                                                                  @Param("name") String name) {
@@ -46,6 +44,12 @@ public class KnowledgeBaseManageController {
     public ApiResponse<Void> updateKnowledgeBase(@Validated(Group.Update.class)
                                                  @RequestBody KnowledgeBaseAddDTO dto) {
         knowledgeBaseManageService.updateKnowledgeBase(dto);
+        return ApiResponse.success();
+    }
+
+    @PostMapping("/delete")
+    public ApiResponse<Void> deleteKnowledgeBase(@RequestParam("id") Integer id) {
+        knowledgeBaseManageService.deleteKnowledgeBase(id);
         return ApiResponse.success();
     }
 }

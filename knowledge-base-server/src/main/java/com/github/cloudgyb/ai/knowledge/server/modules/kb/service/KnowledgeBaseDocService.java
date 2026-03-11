@@ -1,5 +1,6 @@
 package com.github.cloudgyb.ai.knowledge.server.modules.kb.service;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.github.cloudgyb.ai.knowledge.server.config.KnowledgeBaseDocStorageProperties;
 import com.github.cloudgyb.ai.knowledge.server.modules.ai.AiModelType;
@@ -177,6 +178,14 @@ public class KnowledgeBaseDocService extends ServiceImpl<KnowledgeBaseDocMapper,
             }
             threadPoolTaskExecutor.submit(() -> vectoringDoc(knowledgeBaseDoc.getKbId(), id, savedFile));
         }
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public void delDocByKbId(@NotNull Integer kbId) {
+        List<KnowledgeBaseDoc> list = list(new LambdaQueryWrapper<KnowledgeBaseDoc>().eq(KnowledgeBaseDoc::getKbId, kbId));
+        list.forEach(knowledgeBaseDoc -> {
+            delDoc(knowledgeBaseDoc.getId());
+        });
     }
 
     @Transactional(rollbackFor = Exception.class)

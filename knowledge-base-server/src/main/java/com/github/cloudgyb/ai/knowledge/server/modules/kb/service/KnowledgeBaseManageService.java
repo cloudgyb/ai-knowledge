@@ -23,11 +23,14 @@ import java.util.Date;
 public class KnowledgeBaseManageService {
     private final AiModelService aiModelService;
     private final KnowledgeBaseService knowledgeBaseService;
+    private final KnowledgeBaseDocService knowledgeBaseDocService;
 
     public KnowledgeBaseManageService(AiModelService aiModelService,
-                                      KnowledgeBaseService knowledgeBaseService) {
+                                      KnowledgeBaseService knowledgeBaseService,
+                                      KnowledgeBaseDocService knowledgeBaseDocService) {
         this.aiModelService = aiModelService;
         this.knowledgeBaseService = knowledgeBaseService;
+        this.knowledgeBaseDocService = knowledgeBaseDocService;
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -60,5 +63,13 @@ public class KnowledgeBaseManageService {
         Wrapper<KnowledgeBase> queryWrapper = StringUtils.isNotBlank(name) ?
                 new LambdaQueryWrapper<KnowledgeBase>().like(KnowledgeBase::getName, name) : null;
         return knowledgeBaseService.page(new Page<>(pageNum, pageSize), queryWrapper);
+    }
+
+    public void deleteKnowledgeBase(Integer id) {
+        KnowledgeBase knowledgeBase = knowledgeBaseService.getById(id);
+        if (knowledgeBase == null) {
+            throw new RuntimeException("知识库不存在");
+        }
+        knowledgeBaseDocService.delDocByKbId(id);
     }
 }
