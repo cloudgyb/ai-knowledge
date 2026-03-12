@@ -19,6 +19,8 @@ export interface AiModel {
 export interface AiModelProvider {
     id: number
     providerName: string
+    providerCode: string
+    providerCompany: string
     logoUrl?: string
     description?: string
 }

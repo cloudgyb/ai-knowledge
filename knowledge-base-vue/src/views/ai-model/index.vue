@@ -111,7 +111,64 @@
         />
       </div>
     </a-card>
-
+    <!-- 选择 AI模型提供商弹窗 -->
+    <a-modal
+        v-model:open="providerSelectVisible"
+        title="选择 AI模型提供商"
+        width="800px"
+        :footer="null"
+    >
+      <div class="provider-toolbar">
+        <a-select
+            v-model:value="selectedProviderType"
+            :options="aiModelTypeObjs"
+            placeholder="选择模型类型"
+            style="width: 200px"
+            allow-clear
+            @change="handleProviderTypeChange"
+        >
+        </a-select>
+      </div>
+      <a-row :gutter="[16, 16]">
+        <a-col
+            v-for="provider in allProviders"
+            :key="provider.id"
+            :xs="24"
+            :sm="12"
+            :md="8"
+            :lg="6"
+        >
+          <a-card
+              hoverable
+              class="provider-card"
+              @click="selectProvider(provider)"
+          >
+            <template #cover>
+              <div class="provider-logo">
+                <img
+                    v-if="provider.logoUrl"
+                    :src="provider.logoUrl"
+                    :alt="provider.providerName"
+                    style="max-width: 80px; max-height: 80px;width: 80px; height: 80px;"
+                />
+                <ApiOutlined
+                    v-else
+                    style="font-size: 48px; color: #1890ff"
+                />
+              </div>
+            </template>
+            <a-card-meta>
+              <template #title>
+                <a-typography-title :level="5" style="margin: 0">{{ provider.providerName }}</a-typography-title>
+              </template>
+              <template #description>
+                <div class="provider-desc">{{ provider.providerCompany || '未知' }}</div>
+              </template>
+            </a-card-meta>
+          </a-card>
+        </a-col>
+      </a-row>
+    </a-modal>
     <!-- 新增/编辑弹窗 -->
     <a-modal
         v-model:open="modalVisible"
@@ -130,23 +187,12 @@
           <a-input v-model:value="formData.name" placeholder="请输入模型名称"/>
         </a-form-item>
         <a-form-item label="模型类型" name="type">
-          <a-select v-model:value="formData.type" placeholder="请选择模型类型">
-            <a-select-option value="chat">对话模型</a-select-option>
-            <a-select-option value="embedding">嵌入模型</a-select-option>
-            <a-select-option value="image">图像模型</a-select-option>
-          </a-select>
+          <a-select v-model:value="formData.type" :options="aiModelTypeObjs"/>
         </a-form-item>
         <a-form-item label="AI 供应商" name="providerId">
-          <a-select
-              v-model:value="formData.providerId"
-              placeholder="请选择 AI 供应商"
-              @focus="loadProviders"
-          >
-            <a-select-option
-                v-for="provider in providers"
-                :key="provider.id"
-                :value="provider.id"
-            >
+          <a-select v-model:value="formData.providerId" disabled>
+            <a-select-option v-for="provider in allProviders" :key="provider.id" :value="provider.id">
+              <img :src="provider.logoUrl" alt="logo" style="width: 20px; height: 20px; margin-right: 8px;">
               {{ provider.providerName }}
             </a-select-option>
           </a-select>
@@ -199,6 +245,10 @@ const pagination = reactive({
   total: 0
 })
 
+const providerSelectVisible = ref(false)
+const allProviders = ref<AiModelProvider[]>([])
+const selectedProviderType = ref<string | undefined>(undefined)
+
 // 弹窗
 const modalVisible = ref(false)
 const modalTitle = ref('')
@@ -222,6 +272,36 @@ const formRules = {
 
 // 供应商列表
 const providers = ref<AiModelProvider[]>([])
+
+// 加载所有提供商（用于弹窗展示）
+const loadAllProviders = async () => {
+  try {
+    // 根据选中的类型调用后端接口筛选
+    const res = await modelApi.getProviders(selectedProviderType.value || '')
+    console.log(res)
+    if (res.code === '200') {
+      allProviders.value = res.data || []
+    }
+  } catch (error) {
+    console.error('加载所有供应商列表失败:', error)
+  }
+}
+
+// 处理模型类型变化 - 重新加载提供商列表
+const handleProviderTypeChange = async () => {
+  await loadAllProviders()
+}
+
+// 选择提供商
+const selectProvider = (provider: AiModelProvider) => {
+  formData.value.providerId = provider.id
+  providerSelectVisible.value = false
+
+  // 延迟打开新增弹窗
+  setTimeout(() => {
+    modalVisible.value = true
+  }, 100)
+}
 
 const loadAiModelTypes = async () => {
   try {
@@ -251,21 +331,6 @@ const loadModels = async () => {
   }
 }
 
-// 加载供应商
-const loadProviders = async () => {
-  if (providers.value.length > 0) return
-
-  try {
-    const res = await modelApi.getProviders(formData.value.type)
-    console.log(res)
-    if (res.code === '200') {
-      providers.value = res.data || []
-    }
-  } catch (error) {
-    console.error('加载供应商列表失败:', error)
-  }
-}
-
 // 搜索
 const handleSearch = () => {
   pagination.current = 1
@@ -282,21 +347,26 @@ const handleReset = () => {
   loadModels()
 }
 
-// 新增
-const handleAdd = () => {
-  modalTitle.value = '新增 AI 模型'
+// 新增 - 先显示提供商选择弹窗
+const handleAdd = async () => {
+  modalTitle.value = '新增 AI模型'
   formData.value = {
     name: '',
-    type: '',
+    type: 'chat',
     providerId: undefined,
     status: 'active',
     configStr: ''
   }
   providers.value = []
-  modalVisible.value = true
+
+  // 加载所有提供商
+  await loadAllProviders()
+
+  // 显示提供商选择弹窗
+  providerSelectVisible.value = true
 }
 
-// 编辑
+// 编辑 - 直接打开编辑弹窗
 const handleEdit = (model: AiModel) => {
   modalTitle.value = '编辑 AI 模型'
   formData.value = {
@@ -407,5 +477,36 @@ onMounted(() => {
 .pagination-container {
   margin-top: 24px;
   text-align: right;
+}
+
+.provider-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 16px;
+}
+
+.provider-card {
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.provider-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.provider-logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100px;
+  background: linear-gradient(135deg, #667eea 0%, #ffffff 100%);
+  color: #fff;
+}
+
+.provider-desc {
+  font-size: 12px;
+  color: rgba(0, 0, 0, 0.65);
+  margin-top: 8px;
 }
 </style>
