@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.github.cloudgyb.ai.knowledge.server.modules.ai.AiModelType;
 
 import java.util.Date;
 
@@ -29,6 +30,12 @@ public class SysAiModel {
      */
     @TableField(value = "model_type")
     private String modelType;
+
+    @TableField(exist = false)
+    private String modelTypeName;
+
+    @TableField(value = "model_url")
+    private String modelUrl;
 
     /**
      * 模型提供商
@@ -61,9 +68,6 @@ public class SysAiModel {
         return id;
     }
 
-    /**
-     *
-     */
     public void setId(Integer id) {
         this.id = id;
     }
@@ -94,6 +98,7 @@ public class SysAiModel {
      */
     public void setModelType(String modelType) {
         this.modelType = modelType;
+        this.modelTypeName = AiModelType.valueOf(modelType).getDesc();
     }
 
     /**
@@ -108,6 +113,22 @@ public class SysAiModel {
      */
     public void setProviderId(Integer providerId) {
         this.providerId = providerId;
+    }
+
+    public String getModelTypeName() {
+        return modelTypeName;
+    }
+
+    public void setModelTypeName(String modelTypeName) {
+        this.modelTypeName = modelTypeName;
+    }
+
+    public String getModelUrl() {
+        return modelUrl;
+    }
+
+    public void setModelUrl(String modelUrl) {
+        this.modelUrl = modelUrl;
     }
 
     /**

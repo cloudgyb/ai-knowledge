@@ -184,10 +184,11 @@
           layout="vertical"
       >
         <a-form-item label="模型名称" name="name">
-          <a-input v-model:value="formData.name" placeholder="请输入模型名称"/>
+          <a-input v-model:value="formData.customName" placeholder="请输入模型名称"/>
         </a-form-item>
         <a-form-item label="模型类型" name="type">
-          <a-select v-model:value="formData.type" :options="aiModelTypeObjs"/>
+          <a-select v-model:value="formData.modelType" :options="currentProviderAiModelTypeObjs"
+                    @change="handleCurrentAiModelChange"/>
         </a-form-item>
         <a-form-item label="AI 供应商" name="providerId">
           <a-select v-model:value="formData.providerId" disabled>
@@ -197,18 +198,24 @@
             </a-select-option>
           </a-select>
         </a-form-item>
-        <a-form-item label="状态" name="status">
-          <a-radio-group v-model:value="formData.status">
-            <a-radio value="active">启用</a-radio>
-            <a-radio value="inactive">禁用</a-radio>
-          </a-radio-group>
+        <a-form-item label="AI 模型" name="model">
+          <a-select v-model:value="formData.modelId" @change="handleCurrentSysAiModelChange">
+            <a-select-option v-for="aiModel in currentProviderAiModelsTyped" :key="aiModel.id" :value="aiModel.id">
+              {{ aiModel.modelName }}
+            </a-select-option>
+          </a-select>
         </a-form-item>
-        <a-form-item label="配置信息" name="config">
-          <a-textarea
-              v-model:value="formData.configStr"
-              placeholder="请输入 JSON 格式的配置信息"
-              :rows="6"
-          />
+        <a-form-item label="模型接口地址" name="api">
+          <a-input v-model:value="formData.modelUrl" placeholder="请输入模型接口地址"/>
+        </a-form-item>
+        <a-form-item label="模型接口Key" name="key">
+          <a-input v-model:value="formData.modelApiKey" placeholder="请输入模型接口key"/>
+        </a-form-item>
+        <a-form-item label="是否启用" name="status">
+          <a-radio-group v-model:value="formData.status">
+            <a-radio :value="1">启用</a-radio>
+            <a-radio :value="0">禁用</a-radio>
+          </a-radio-group>
         </a-form-item>
       </a-form>
     </a-modal>
@@ -216,7 +223,7 @@
 </template>
 
 <script setup lang="ts">
-import {ref, reactive, onMounted} from 'vue'
+import {ref, reactive, onMounted, computed} from 'vue'
 import {message} from 'ant-design-vue'
 import {
   SearchOutlined,
@@ -226,7 +233,7 @@ import {
   ApiOutlined
 } from '@ant-design/icons-vue'
 import {modelApi} from '@/api/model'
-import type {AiModel, AiModelProvider} from '@/api/model/types'
+import type {AiModel, AiModelProvider, SysAiModel} from '@/api/model/types'
 
 const aiModelTypeObjs = ref([])
 // 搜索表单
@@ -256,12 +263,16 @@ const submitLoading = ref(false)
 
 // 表单
 const formRef = ref()
-const formData = ref<any>({
-  name: '',
-  type: '',
+const formData = ref<AiModel>({
+  customName: '',
+  modelType: undefined,
   providerId: undefined,
-  status: 'active',
-  configStr: ''
+  modelName: undefined,
+  modelUrl: '',
+  modelApiKey: '',
+  modelApiSecret: '',
+  modelId: undefined,
+  status: 0
 })
 
 const formRules = {
@@ -297,6 +308,14 @@ const selectProvider = (provider: AiModelProvider) => {
   formData.value.providerId = provider.id
   providerSelectVisible.value = false
 
+  loadSysAiModels(provider.id)
+
+  formData.value.modelType = undefined
+  formData.value.customName = ''
+  formData.value.modelUrl = ''
+  formData.value.modelApiKey = ''
+  formData.value.modelId = undefined
+
   // 延迟打开新增弹窗
   setTimeout(() => {
     modalVisible.value = true
@@ -313,6 +332,45 @@ const loadAiModelTypes = async () => {
   } catch (error) {
     console.error('加载模型类型列表失败:', error)
   }
+}
+
+const currentProviderAiModels = ref<SysAiModel[]>([])
+
+const currentProviderAiModelsTyped = ref<SysAiModel[]>([])
+
+const currentProviderAiModelTypeObjs = computed(() => {
+  let map = new Map(currentProviderAiModels.value.map(item => [item.modelType, item]))
+  return Array.from(map.values()).map(item => {
+    return {
+      value: item.modelType,
+      label: item.modelTypeName,
+      key: item.modelType
+    }
+  })
+})
+
+const handleCurrentAiModelChange = async (modelType: string) => {
+  currentProviderAiModelsTyped.value = currentProviderAiModels.value.filter(item => item.modelType === modelType)
+  const sysAiModel = currentProviderAiModelsTyped.value[0];
+  formData.value.modelId = sysAiModel.id
+  formData.value.modelUrl = sysAiModel.modelUrl
+}
+
+const handleCurrentSysAiModelChange = async (sysAiModelId: number) => {
+  const sysAiModel = currentProviderAiModelsTyped.value.find(item => item.id === sysAiModelId)
+  formData.value.modelUrl = sysAiModel?.modelUrl
+}
+const loadSysAiModels = async (providerId: number) => {
+  try {
+    const res = await modelApi.getSysAiModels(providerId)
+    console.log(res)
+    if (res.code === '200') {
+      currentProviderAiModels.value = res.data || []
+    }
+  } catch (error) {
+    console.error('加载 AI模型列表失败:', error)
+  }
+
 }
 
 // 加载数据
@@ -350,18 +408,9 @@ const handleReset = () => {
 // 新增 - 先显示提供商选择弹窗
 const handleAdd = async () => {
   modalTitle.value = '新增 AI模型'
-  formData.value = {
-    name: '',
-    type: 'chat',
-    providerId: undefined,
-    status: 'active',
-    configStr: ''
-  }
   providers.value = []
-
   // 加载所有提供商
   await loadAllProviders()
-
   // 显示提供商选择弹窗
   providerSelectVisible.value = true
 }
@@ -370,9 +419,12 @@ const handleAdd = async () => {
 const handleEdit = (model: AiModel) => {
   modalTitle.value = '编辑 AI 模型'
   formData.value = {
-    ...model,
-    configStr: model.config ? JSON.stringify(model.config, null, 2) : ''
+    ...model
   }
+  formData.value.modelType = undefined
+  formData.value.customName = ''
+  formData.value.modelUrl = ''
+  formData.value.modelApiKey = ''
   modalVisible.value = true
 }
 
@@ -397,8 +449,7 @@ const handleSubmit = async () => {
     submitLoading.value = true
 
     const submitData = {
-      ...formData.value,
-      config: formData.value.configStr ? JSON.parse(formData.value.configStr) : {}
+      ...formData.value
     }
 
     if (formData.value.id) {

@@ -1,5 +1,5 @@
 import request from '@/utils/request'
-import type {AiModelProvider, ApiResponse} from "@/api/model/types";
+import type {AiModelProvider, ApiResponse, SysAiModel} from "@/api/model/types";
 
 export const modelApi = {
     getAiModelTypes(): Promise<ApiResponse<any>> {
@@ -34,5 +34,9 @@ export const modelApi = {
     // 获取 AI 模型供应商列表
     getProviders(modelType?: string): Promise<ApiResponse<AiModelProvider[]>> {
         return request.get('/sys/ai/model/providers', {params: {modelType}})
+    },
+    // 获取系统内置的 AI 模型列表
+    getSysAiModels(providerId: number): Promise<ApiResponse<SysAiModel[]>> {
+        return request.get('/sys/ai/model/list', {params: {providerId}})
     }
 }

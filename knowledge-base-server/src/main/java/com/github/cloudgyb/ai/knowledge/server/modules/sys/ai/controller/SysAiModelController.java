@@ -1,7 +1,9 @@
 package com.github.cloudgyb.ai.knowledge.server.modules.sys.ai.controller;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.github.cloudgyb.ai.knowledge.server.modules.ai.AiModelType;
 import com.github.cloudgyb.ai.knowledge.server.modules.commons.ApiResponse;
+import com.github.cloudgyb.ai.knowledge.server.modules.sys.ai.domain.SysAiModel;
 import com.github.cloudgyb.ai.knowledge.server.modules.sys.ai.domain.SysAiModelProvider;
 import com.github.cloudgyb.ai.knowledge.server.modules.sys.ai.service.SysAiModelProviderService;
 import com.github.cloudgyb.ai.knowledge.server.modules.sys.ai.service.SysAiModelService;
@@ -23,9 +25,12 @@ import java.util.List;
 @RequestMapping("/sys/ai/model")
 public class SysAiModelController {
     private final SysAiModelProviderService sysAiModelProviderService;
+    private final SysAiModelService sysAiModelService;
 
-    public SysAiModelController(SysAiModelProviderService sysAiModelProviderService) {
+    public SysAiModelController(SysAiModelProviderService sysAiModelProviderService,
+                                SysAiModelService sysAiModelService) {
         this.sysAiModelProviderService = sysAiModelProviderService;
+        this.sysAiModelService = sysAiModelService;
     }
 
     @GetMapping("/providers")
@@ -33,6 +38,13 @@ public class SysAiModelController {
         if (modelType != null)
             return ApiResponse.success(sysAiModelProviderService.getProvidersByModelType(modelType));
         return ApiResponse.success(sysAiModelProviderService.getAllProviders());
+    }
+
+    @GetMapping("/list")
+    public ApiResponse<List<SysAiModel>> list(@Param("providerId") Integer providerId) {
+        List<SysAiModel> list = sysAiModelService.list(new LambdaQueryWrapper<SysAiModel>()
+                .eq(SysAiModel::getProviderId, providerId));
+        return ApiResponse.success(list);
     }
 
 }
