@@ -1,9 +1,8 @@
 package com.github.cloudgyb.ai.knowledge.server.modules.ai.domain;
 
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.annotation.*;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.util.Date;
 
@@ -13,6 +12,8 @@ import java.util.Date;
  * @author cloudgyb
  * @since 2026-02-28 15:01:50
  */
+@Getter
+@Setter
 @TableName(value = "ai_model")
 public class AiModel {
     @TableId(value = "id", type = IdType.AUTO)
@@ -75,13 +76,13 @@ public class AiModel {
     /**
      * 创建时间
      */
-    @TableField(value = "create_time")
+    @TableField(value = "create_time", fill = FieldFill.INSERT)
     private Date createTime;
 
     /**
      * 更新时间
      */
-    @TableField(value = "update_time")
+    @TableField(value = "update_time", fill = FieldFill.UPDATE)
     private Date updateTime;
 
     /**
@@ -89,180 +90,4 @@ public class AiModel {
      */
     @TableField(value = "deleted")
     private Integer deleted;
-
-    /**
-     *
-     */
-    public Integer getId() {
-        return id;
-    }
-
-    /**
-     *
-     */
-    public void setId(Integer id) {
-        this.id = id;
-    }
-
-    /**
-     * 自定义名称
-     */
-    public String getCustomName() {
-        return customName;
-    }
-
-    /**
-     * 自定义名称
-     */
-    public void setCustomName(String customName) {
-        this.customName = customName;
-    }
-
-    /**
-     * 模型名称
-     */
-    public String getModelName() {
-        return modelName;
-    }
-
-    /**
-     * 模型名称
-     */
-    public void setModelName(String modelName) {
-        this.modelName = modelName;
-    }
-
-    /**
-     * 模型类型
-     */
-    public String getModelType() {
-        return modelType;
-    }
-
-    /**
-     * 模型类型
-     */
-    public void setModelType(String modelType) {
-        this.modelType = modelType;
-    }
-
-    /**
-     * 模型API URL
-     */
-    public String getModelUrl() {
-        return modelUrl;
-    }
-
-    /**
-     * 模型API URL
-     */
-    public void setModelUrl(String modelUrl) {
-        this.modelUrl = modelUrl;
-    }
-
-    /**
-     * 模型API Key
-     */
-    public String getModelApiKey() {
-        return modelApiKey;
-    }
-
-    /**
-     * 模型API Key
-     */
-    public void setModelApiKey(String modelApiKey) {
-        this.modelApiKey = modelApiKey;
-    }
-
-    /**
-     * 模型API密钥
-     */
-    public String getModelApiSecret() {
-        return modelApiSecret;
-    }
-
-    /**
-     * 模型API密钥
-     */
-    public void setModelApiSecret(String modelApiSecret) {
-        this.modelApiSecret = modelApiSecret;
-    }
-
-    /**
-     * 模型提供商
-     */
-    public Integer getProviderId() {
-        return providerId;
-    }
-
-    /**
-     * 模型提供商
-     */
-    public void setProviderId(Integer providerId) {
-        this.providerId = providerId;
-    }
-
-    /**
-     * 模型状态，0未激活1已激活
-     */
-    public Integer getStatus() {
-        return status;
-    }
-
-    /**
-     * 模型状态，0未激活1已激活
-     */
-    public void setStatus(Integer status) {
-        this.status = status;
-    }
-
-    /**
-     * 创建时间
-     */
-    public Date getCreateTime() {
-        return createTime;
-    }
-
-    /**
-     * 创建时间
-     */
-    public void setCreateTime(Date createTime) {
-        this.createTime = createTime;
-    }
-
-    /**
-     * 更新时间
-     */
-    public Date getUpdateTime() {
-        return updateTime;
-    }
-
-    /**
-     * 更新时间
-     */
-    public void setUpdateTime(Date updateTime) {
-        this.updateTime = updateTime;
-    }
-
-    /**
-     * 是否删除
-     */
-    public Integer getDeleted() {
-        return deleted;
-    }
-
-    /**
-     * 是否删除
-     */
-    public void setDeleted(Integer deleted) {
-        this.deleted = deleted;
-    }
-
-    public Long getCreateUserId() {
-        return createUserId;
-    }
-
-    public void setCreateUserId(Long createUserId) {
-        this.createUserId = createUserId;
-    }
 }

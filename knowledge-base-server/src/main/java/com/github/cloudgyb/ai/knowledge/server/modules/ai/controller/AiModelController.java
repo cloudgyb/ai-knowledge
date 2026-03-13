@@ -4,12 +4,18 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.github.cloudgyb.ai.knowledge.server.modules.ai.AiModelType;
 import com.github.cloudgyb.ai.knowledge.server.modules.ai.domain.AiModel;
+import com.github.cloudgyb.ai.knowledge.server.modules.ai.dto.AiModelDTO;
 import com.github.cloudgyb.ai.knowledge.server.modules.ai.service.AiModelService;
 import com.github.cloudgyb.ai.knowledge.server.modules.commons.ApiResponse;
 import com.github.cloudgyb.ai.knowledge.server.modules.commons.dto.AntDesignSelectOption;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import com.github.cloudgyb.ai.knowledge.server.modules.commons.validation.Group;
+import jakarta.validation.constraints.NotNull;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.BeanUtils;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 /**
  * AI模型管理
@@ -19,6 +25,7 @@ import org.springframework.web.bind.annotation.RestController;
  */
 @RestController
 @RequestMapping("/ai/model")
+@Validated
 public class AiModelController {
     private final AiModelService aiModelService;
 
@@ -37,9 +44,16 @@ public class AiModelController {
     }
 
     @GetMapping
-    public ApiResponse<Page<AiModel>> page(Integer pageNum, Integer pageSize, String name) {
-        Page<AiModel> page = aiModelService.page(new Page<>(pageNum, pageSize),
-                new LambdaQueryWrapper<AiModel>().like(AiModel::getCustomName, name));
+    public ApiResponse<Page<AiModelDTO>> page(@NotNull Integer pageNum,
+                                              @NotNull Integer pageSize,
+                                              String name, String type) {
+        Page<AiModelDTO> page = aiModelService.page(pageNum, pageSize, name, type);
         return ApiResponse.success(page);
+    }
+
+    @PostMapping
+    public ApiResponse<Void> add(@Validated(Group.Add.class) @RequestBody AiModelDTO dto) {
+        aiModelService.addAiModel(dto);
+        return ApiResponse.success();
     }
 }

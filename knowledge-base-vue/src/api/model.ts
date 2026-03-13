@@ -1,5 +1,6 @@
 import request from '@/utils/request'
-import type {AiModelProvider, ApiResponse, SysAiModel} from "@/api/model/types";
+import type {ApiResponse, ApiResponsePagination} from "@/api/model/types";
+import type {AiModel, AiModelProvider, SysAiModel} from "@/api/model/aiModelTypes";
 
 export const modelApi = {
     getAiModelTypes(): Promise<ApiResponse<any>> {
@@ -7,8 +8,13 @@ export const modelApi = {
     },
     // 获取 AI 模型供应商列表
     // 获取 AI 模型列表
-    getList(params?: { name?: string; type?: string }) {
-        return request.get('/ai/model/list', {params})
+    getList(params?: {
+        name?: string;
+        type?: string;
+        pageNum?: number;
+        pageSize?: number
+    }): Promise<ApiResponse<ApiResponsePagination<AiModel>>> {
+        return request.get('/ai/model', {params})
     },
 
     // 获取 AI 模型详情
@@ -17,8 +23,8 @@ export const modelApi = {
     },
 
     // 新增 AI 模型
-    add(data: any) {
-        return request.post('/ai/model/add', data)
+    add(data: any): Promise<ApiResponse<any>> {
+        return request.post('/ai/model', data)
     },
 
     // 更新 AI 模型
@@ -27,7 +33,7 @@ export const modelApi = {
     },
 
     // 删除 AI 模型
-    delete(id: number) {
+    delete(id: number): Promise<ApiResponse<any>> {
         return request.post('/ai/model/delete', null, {params: {id}})
     },
 

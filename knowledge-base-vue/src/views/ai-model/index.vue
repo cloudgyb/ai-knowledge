@@ -4,22 +4,11 @@
     <a-card class="search-card" :bordered="false">
       <a-form layout="inline" :model="searchForm">
         <a-form-item label="模型名称">
-          <a-input
-              v-model:value="searchForm.name"
-              placeholder="请输入模型名称"
-              style="width: 200px"
-              allow-clear
-          />
+          <a-input v-model:value="searchForm.modelName" placeholder="请输入模型名称" style="width: 200px" allow-clear/>
         </a-form-item>
         <a-form-item label="模型类型">
-          <a-select
-              :options="aiModelTypeObjs"
-              v-model:value="searchForm.type"
-              placeholder="请选择模型类型"
-              style="width: 150px"
-              allow-clear
-          >
-          </a-select>
+          <a-select :options="aiModelTypeOptions" v-model:value="searchForm.modelType" placeholder="请选择模型类型"
+                    style="width: 150px" allow-clear/>
         </a-form-item>
         <a-form-item>
           <a-space>
@@ -37,77 +26,74 @@
             </a-button>
           </a-space>
         </a-form-item>
+        <a-form-item style="position:absolute; right: 0">
+          <a-button type="primary" @click="handleAdd">
+            <template #icon>
+              <PlusOutlined/>
+            </template>
+            新增 AI 模型
+          </a-button>
+        </a-form-item>
       </a-form>
     </a-card>
-
-    <!-- 操作栏 -->
-    <a-card class="toolbar-card" :bordered="false">
-      <a-button type="primary" @click="handleAdd">
-        <template #icon>
-          <PlusOutlined/>
-        </template>
-        新增 AI 模型
-      </a-button>
-    </a-card>
-
     <!-- 模型列表 -->
     <a-card :bordered="false">
       <a-row :gutter="[16, 16]">
-        <a-col
-            v-for="model in modelList"
-            :key="model.id"
-            :xs="24"
-            :sm="12"
-            :md="8"
-            :lg="6"
-        >
-          <a-card hoverable class="model-card">
-            <template #actions>
-              <a-popconfirm
-                  title="确定删除该模型吗？"
-                  ok-text="确定"
-                  cancel-text="取消"
-                  @confirm="handleDelete(model.id)"
-              >
-                <DeleteOutlined key="delete" style="color: #ff4d4f"/>
-              </a-popconfirm>
+        <a-col v-for="model in aiModelList" :key="model.id" :xs="24" :sm="12" :md="8" :lg="6">
+          <a-card size="small" hoverable class="model-card">
+            <template #title>
+              <a-typography-title :level="5" style="margin: 0">
+                <img :src="model.provider?.logoUrl" :alt="model.provider?.providerCompany"
+                     :title="model.provider?.providerCompany"
+                     style="width: 40px">
+                {{ model.customName }}
+              </a-typography-title>
             </template>
-            <template #cover>
-              <div class="model-cover">
-                <ApiOutlined style="font-size: 48px; color: #1890ff"/>
+            <template #extra>
+              <div style="display: flex">
+                <a-popconfirm
+                    title="确定删除该模型吗？"
+                    ok-text="确定"
+                    cancel-text="取消"
+                    @confirm="handleDelete(model.id)"
+                >
+                  <DeleteOutlined key="delete" style="color: #ff4d4f"/>
+                </a-popconfirm>
+                <edit-outlined key="edit" @click="handleEdit(model)"/>
               </div>
             </template>
-            <a-card-meta>
-              <template #title>
-                <a-typography-title :level="5" style="margin: 0">{{ model.name }}</a-typography-title>
-              </template>
+            <a-card-meta @click="handleEdit(model)">
               <template #description>
-                <a-tag color="blue">{{ model.type }}</a-tag>
-                <div class="provider-info">供应商：{{ model.providerName || '未知' }}</div>
+                <div class="status-info">
+                  类型：
+                  <a-tag color="blue">{{ getModelTypeName(model.modelType) }}</a-tag>
+                </div>
+                <div class="status-info">AI供应商：{{ model.provider?.providerName || '未知' }}</div>
                 <div class="status-info">
                   状态：
-                  <a-badge :status="model.status === 'active' ? 'success' : 'default'"
-                           :text="model.status === 'active' ? '已启用' : '已禁用'"/>
+                  <a-badge :status="model.status === 1 ? 'success' : 'default'">
+                    <template #text>
+                      <span class="status-info">{{ model.status === 1 ? '已启用' : '已禁用' }}</span>
+                    </template>
+                  </a-badge>
                 </div>
               </template>
             </a-card-meta>
-            <div class="card-footer">
-              <a-button type="link" @click="handleEdit(model)">编辑</a-button>
-            </div>
           </a-card>
         </a-col>
       </a-row>
 
       <!-- 分页 -->
       <div class="pagination-container">
-        <a-pagination
-            v-model:current="pagination.current"
-            v-model:page-size="pagination.pageSize"
-            :total="pagination.total"
-            show-size-changer
-            show-quick-jumper
-            @change="handlePageChange"
-            @show-size-change="handlePageSizeChange"
+        <a-pagination size="small"
+                      v-model:current="pagination.current"
+                      v-model:page-size="pagination.pageSize"
+                      :total="pagination.total"
+                      show-quick-jumper
+                      show-size-changer
+                      :show-total="pagination.showTotal"
+                      @change="handlePageChange"
+                      @show-size-change="handlePageSizeChange"
         />
       </div>
     </a-card>
@@ -121,7 +107,7 @@
       <div class="provider-toolbar">
         <a-select
             v-model:value="selectedProviderType"
-            :options="aiModelTypeObjs"
+            :options="aiModelTypeOptions"
             placeholder="选择模型类型"
             style="width: 200px"
             allow-clear
@@ -183,10 +169,10 @@
           :rules="formRules"
           layout="vertical"
       >
-        <a-form-item label="模型名称" name="name">
+        <a-form-item label="模型名称" name="customName">
           <a-input v-model:value="formData.customName" placeholder="请输入模型名称"/>
         </a-form-item>
-        <a-form-item label="模型类型" name="type">
+        <a-form-item label="模型类型" name="modelType">
           <a-select v-model:value="formData.modelType" :options="currentProviderAiModelTypeObjs"
                     @change="handleCurrentAiModelChange"/>
         </a-form-item>
@@ -198,17 +184,20 @@
             </a-select-option>
           </a-select>
         </a-form-item>
-        <a-form-item label="AI 模型" name="model">
+        <a-form-item label="AI 模型" name="modelId">
           <a-select v-model:value="formData.modelId" @change="handleCurrentSysAiModelChange">
             <a-select-option v-for="aiModel in currentProviderAiModelsTyped" :key="aiModel.id" :value="aiModel.id">
               {{ aiModel.modelName }}
             </a-select-option>
           </a-select>
         </a-form-item>
-        <a-form-item label="模型接口地址" name="api">
+        <a-form-item label="模型名称" name="modelName" style="display: none">
+          <a-input v-model:value="formData.modelName"/>
+        </a-form-item>
+        <a-form-item label="模型接口地址" name="modelUrl">
           <a-input v-model:value="formData.modelUrl" placeholder="请输入模型接口地址"/>
         </a-form-item>
-        <a-form-item label="模型接口Key" name="key">
+        <a-form-item label="模型接口Key" name="modelApiKey">
           <a-input v-model:value="formData.modelApiKey" placeholder="请输入模型接口key"/>
         </a-form-item>
         <a-form-item label="是否启用" name="status">
@@ -223,33 +212,33 @@
 </template>
 
 <script setup lang="ts">
-import {ref, reactive, onMounted, computed} from 'vue'
-import {message} from 'ant-design-vue'
+import {ref, reactive, onMounted, computed, type UnwrapRef} from 'vue'
+import {message, type PaginationProps, type SelectProps} from 'ant-design-vue'
 import {
   SearchOutlined,
   RedoOutlined,
   PlusOutlined,
   DeleteOutlined,
-  ApiOutlined
+  ApiOutlined,
+  EditOutlined
 } from '@ant-design/icons-vue'
 import {modelApi} from '@/api/model'
-import type {AiModel, AiModelProvider, SysAiModel} from '@/api/model/types'
-
-const aiModelTypeObjs = ref([])
+import type {AiModel, AiModelProvider, AiModelSearchForm, SysAiModel} from '@/api/model/aiModelTypes'
+// 模型类型 Select 下拉选项
+const aiModelTypeOptions = ref<SelectProps['options']>([])
 // 搜索表单
-const searchForm = ref({
-  name: '',
-  type: ''
-})
-
+const searchForm = ref<AiModelSearchForm>({modelName: '', modelType: ''})
 // 模型列表
-const modelList = ref<AiModel[]>([])
+const aiModelList = ref<AiModel[]>([])
 
 // 分页
-const pagination = reactive({
+const pagination = reactive<PaginationProps>({
   current: 1,
   pageSize: 10,
-  total: 0
+  total: 0,
+  showSizeChanger: true,
+  showQuickJumper: true,
+  showTotal: (total) => `共 ${total} 个`
 })
 
 const providerSelectVisible = ref(false)
@@ -265,20 +254,26 @@ const submitLoading = ref(false)
 const formRef = ref()
 const formData = ref<AiModel>({
   customName: '',
-  modelType: undefined,
   providerId: undefined,
+  modelId: undefined,
+  modelType: undefined,
   modelName: undefined,
   modelUrl: '',
   modelApiKey: '',
   modelApiSecret: '',
-  modelId: undefined,
-  status: 0
+  status: 1,
+  config: {}
 })
 
 const formRules = {
-  name: [{required: true, message: '请输入模型名称', trigger: 'blur'}],
-  type: [{required: true, message: '请选择模型类型', trigger: 'change'}],
-  providerId: [{required: true, message: '请选择 AI 供应商', trigger: 'change'}]
+  customName: [{required: true, message: '请输入模型名称', trigger: 'blur'},
+    {max: 20, message: '模型名称长度不能超过20个字符', trigger: 'blur'}],
+  modelType: [{required: true, message: '请选择模型类型', trigger: 'change'}],
+  providerId: [{required: true, message: '请选择 AI 供应商', trigger: 'change'}],
+  modelId: [{required: true, message: '请选择模型', trigger: 'change'}],
+  modelUrl: [{required: true, message: '请输入模型接口地址', trigger: 'blur'}],
+  modelApiKey: [{required: true, message: '请输入模型接口Key', trigger: 'blur'}],
+  status: [{required: true, message: '请选择是否启用', trigger: 'change'}]
 }
 
 // 供应商列表
@@ -305,16 +300,17 @@ const handleProviderTypeChange = async () => {
 
 // 选择提供商
 const selectProvider = (provider: AiModelProvider) => {
-  formData.value.providerId = provider.id
   providerSelectVisible.value = false
-
   loadSysAiModels(provider.id)
 
-  formData.value.modelType = undefined
+  formData.value.id = undefined
+  formData.value.providerId = provider.id
   formData.value.customName = ''
+  formData.value.modelId = undefined
+  formData.value.modelType = undefined
+  formData.value.modelName = undefined
   formData.value.modelUrl = ''
   formData.value.modelApiKey = ''
-  formData.value.modelId = undefined
 
   // 延迟打开新增弹窗
   setTimeout(() => {
@@ -322,15 +318,15 @@ const selectProvider = (provider: AiModelProvider) => {
   }, 100)
 }
 
-const loadAiModelTypes = async () => {
+const loadAiModelTypeOptions = async () => {
   try {
     const res = await modelApi.getAiModelTypes()
-    console.log(res)
     if (res.code === '200') {
-      aiModelTypeObjs.value = res.data || []
+      aiModelTypeOptions.value = res.data || []
     }
   } catch (error) {
-    console.error('加载模型类型列表失败:', error)
+    message.error('加载模型类型选项失败')
+    console.error('加载模型类型选项失败:', error)
   }
 }
 
@@ -354,16 +350,18 @@ const handleCurrentAiModelChange = async (modelType: string) => {
   const sysAiModel = currentProviderAiModelsTyped.value[0];
   formData.value.modelId = sysAiModel.id
   formData.value.modelUrl = sysAiModel.modelUrl
+  formData.value.modelName = sysAiModel.modelName
 }
 
 const handleCurrentSysAiModelChange = async (sysAiModelId: number) => {
   const sysAiModel = currentProviderAiModelsTyped.value.find(item => item.id === sysAiModelId)
+  formData.value.modelId = sysAiModel?.id
   formData.value.modelUrl = sysAiModel?.modelUrl
+  formData.value.modelName = sysAiModel?.modelName
 }
 const loadSysAiModels = async (providerId: number) => {
   try {
     const res = await modelApi.getSysAiModels(providerId)
-    console.log(res)
     if (res.code === '200') {
       currentProviderAiModels.value = res.data || []
     }
@@ -377,11 +375,13 @@ const loadSysAiModels = async (providerId: number) => {
 const loadModels = async () => {
   try {
     const res = await modelApi.getList({
-      name: searchForm.value.name,
-      type: searchForm.value.type
+      name: searchForm.value.modelName,
+      type: searchForm.value.modelType,
+      pageNum: pagination.current,
+      pageSize: pagination.pageSize
     })
     if (res.code === '200') {
-      modelList.value = res.data.records || []
+      aiModelList.value = res.data.records || []
       pagination.total = res.data.total || 0
     }
   } catch (error) {
@@ -398,8 +398,8 @@ const handleSearch = () => {
 // 重置
 const handleReset = () => {
   searchForm.value = {
-    name: '',
-    type: ''
+    modelName: '',
+    modelType: ''
   }
   pagination.current = 1
   loadModels()
@@ -416,25 +416,29 @@ const handleAdd = async () => {
 }
 
 // 编辑 - 直接打开编辑弹窗
-const handleEdit = (model: AiModel) => {
+const handleEdit = async (model: AiModel) => {
   modalTitle.value = '编辑 AI 模型'
+  modalVisible.value = true
+  await loadAllProviders()
+  await loadSysAiModels(model.provider?.id || 0)
+  currentProviderAiModelsTyped.value = currentProviderAiModels.value.filter(item => item.modelType === model.modelType)
   formData.value = {
     ...model
   }
-  formData.value.modelType = undefined
-  formData.value.customName = ''
-  formData.value.modelUrl = ''
-  formData.value.modelApiKey = ''
-  modalVisible.value = true
+  formData.value.modelId = currentProviderAiModels.value.filter(item => item.modelName === model.modelName).at(0)?.id
+  //debugger
 }
 
 // 删除
-const handleDelete = async (id: number) => {
+const handleDelete = async (id: number | undefined) => {
   try {
+    if (!id) {
+      return
+    }
     const res = await modelApi.delete(id)
-    if (res.code === 200) {
+    if (res.code === '200') {
       message.success('删除成功')
-      loadModels()
+      await loadModels()
     }
   } catch (error) {
     console.error('删除失败:', error)
@@ -442,10 +446,15 @@ const handleDelete = async (id: number) => {
   }
 }
 
-// 提交
+// 提交添加
 const handleSubmit = async () => {
   try {
-    await formRef.value.validate()
+    try {
+      await formRef.value.validate()
+    } catch (error) {
+      message.error('请填写必填项')
+      return
+    }
     submitLoading.value = true
 
     const submitData = {
@@ -453,6 +462,7 @@ const handleSubmit = async () => {
     }
 
     if (formData.value.id) {
+      //debugger
       await modelApi.update(submitData)
       message.success('更新成功')
     } else {
@@ -461,10 +471,15 @@ const handleSubmit = async () => {
     }
 
     modalVisible.value = false
-    loadModels()
+    await loadModels()
   } catch (error: any) {
     if (error.message?.includes('JSON')) {
       message.error('配置信息必须是有效的 JSON 格式')
+    }
+    if (formData.value.id) {
+      message.error('更新失败')
+    } else {
+      message.error('添加失败')
     }
     console.error('提交失败:', error)
   } finally {
@@ -484,8 +499,13 @@ const handlePageSizeChange = (current: number, size: number) => {
   loadModels()
 }
 
+const getModelTypeName = (modelType: UnwrapRef<AiModel["modelType"]> | undefined) => {
+  const modelTypeObj = aiModelTypeOptions.value?.find(item => item.value === modelType)
+  return modelTypeObj?.label || ''
+}
+
 onMounted(() => {
-  loadAiModelTypes()
+  loadAiModelTypeOptions()
   loadModels()
 })
 </script>
@@ -502,13 +522,15 @@ onMounted(() => {
 
 .model-card {
   height: 100%;
+  border: #ccc 1px solid;
+  box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.15);
 }
 
 .model-cover {
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 120px;
+  height: 50px;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: #fff;
 }
@@ -518,6 +540,19 @@ onMounted(() => {
   margin-top: 8px;
   font-size: 12px;
   color: rgba(0, 0, 0, 0.65);
+}
+
+:deep(.ant-card-meta-detail), :deep(.ant-card-meta-title) {
+  overflow: visible !important;
+  margin: 0;
+}
+
+:deep(.ant-card-meta-title) {
+  height: 30px;
+}
+
+:deep(.ant-card-body) {
+  padding-bottom: 10px;
 }
 
 .card-footer {

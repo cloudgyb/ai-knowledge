@@ -1,9 +1,6 @@
 package com.github.cloudgyb.ai.knowledge.server.modules.ai.domain;
 
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.annotation.*;
 
 import java.util.Date;
 
@@ -28,43 +25,43 @@ public class AiModelConfig {
      * 模型温度
      */
     @TableField(value = "temperature")
-    private Double temperature;
+    private Double temperature = 0.7;
 
     /**
      * 词汇属性
      */
     @TableField(value = "lexical")
-    private Double lexical;
+    private Double lexical = 0.5;
 
     /**
      * 话题属性
      */
     @TableField(value = "talk")
-    private Double talk;
+    private Double talk = 0.5;
 
     /**
      * 重复属性
      */
-    @TableField(value = "repeat")
-    private Double repeat;
+    @TableField(value = "`repeat`")
+    private Double repeat = 0.5;
 
     /**
      * 最大回复的token数
      */
     @TableField(value = "tokens")
-    private Integer tokens;
+    private Integer tokens = 1024;
 
     /**
      * 等待AI响应的最长时间，单位为秒。
      */
     @TableField(value = "timeout")
-    private Integer timeout;
+    private Integer timeout = 10;
 
 
-    @TableField(value = "create_time")
+    @TableField(value = "create_time", fill = FieldFill.INSERT)
     private Date createTime;
 
-    @TableField(value = "update_time")
+    @TableField(value = "update_time", fill = FieldFill.UPDATE)
     private Date updateTime;
 
     public Integer getId() {
