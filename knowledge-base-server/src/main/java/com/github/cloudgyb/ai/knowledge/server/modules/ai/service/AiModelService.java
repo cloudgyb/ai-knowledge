@@ -8,6 +8,9 @@ import com.github.cloudgyb.ai.knowledge.server.modules.ai.domain.AiModel;
 import com.github.cloudgyb.ai.knowledge.server.modules.ai.domain.AiModelConfig;
 import com.github.cloudgyb.ai.knowledge.server.modules.ai.dto.AiModelDTO;
 import com.github.cloudgyb.ai.knowledge.server.modules.ai.mapper.AiModelMapper;
+import com.github.cloudgyb.ai.knowledge.server.modules.commons.BusinessException;
+import com.github.cloudgyb.ai.knowledge.server.modules.kb.domain.KnowledgeBase;
+import com.github.cloudgyb.ai.knowledge.server.modules.kb.service.KnowledgeBaseService;
 import com.github.cloudgyb.ai.knowledge.server.modules.sys.ai.domain.SysAiModelProvider;
 import com.github.cloudgyb.ai.knowledge.server.modules.sys.ai.service.SysAiModelProviderService;
 import jakarta.validation.constraints.NotNull;
@@ -28,11 +31,15 @@ import java.util.List;
 public class AiModelService extends ServiceImpl<AiModelMapper, AiModel> {
     private final AiModelConfigService aiModelConfigService;
     private final SysAiModelProviderService sysAiModelProviderService;
+    private final KnowledgeBaseService knowledgeBaseService;
+
 
     public AiModelService(AiModelConfigService aiModelConfigService,
-                          SysAiModelProviderService sysAiModelProviderService) {
+                          SysAiModelProviderService sysAiModelProviderService,
+                          KnowledgeBaseService knowledgeBaseService) {
         this.aiModelConfigService = aiModelConfigService;
         this.sysAiModelProviderService = sysAiModelProviderService;
+        this.knowledgeBaseService = knowledgeBaseService;
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -40,12 +47,12 @@ public class AiModelService extends ServiceImpl<AiModelMapper, AiModel> {
         Integer providerId = dto.getProviderId();
         SysAiModelProvider byId = sysAiModelProviderService.getById(providerId);
         if (byId == null) {
-            throw new RuntimeException("AI模型提供商不存在");
+            throw new BusinessException("AI模型提供商不存在");
         }
         String customName = dto.getCustomName();
         AiModel one = getOne(new LambdaQueryWrapper<AiModel>().eq(AiModel::getCustomName, customName).last("LIMIT 1"));
         if (one != null) {
-            throw new RuntimeException("模型名称已存在");
+            throw new BusinessException("模型名称已存在");
         }
         AiModel aiModel = new AiModel();
         aiModel.setCustomName(dto.getCustomName());
@@ -59,13 +66,13 @@ public class AiModelService extends ServiceImpl<AiModelMapper, AiModel> {
         aiModel.setCreateUserId(1L);
         boolean save = save(aiModel);
         if (!save) {
-            throw new RuntimeException("添加模型失败");
+            throw new BusinessException("添加模型失败");
         }
         AiModelConfig config = dto.getConfig();
         config.setModelId(aiModel.getId());
         boolean save1 = aiModelConfigService.save(config);
         if (!save1) {
-            throw new RuntimeException("模型配置保存失败");
+            throw new BusinessException("模型配置保存失败");
         }
     }
 
@@ -89,6 +96,60 @@ public class AiModelService extends ServiceImpl<AiModelMapper, AiModel> {
         BeanUtils.copyProperties(page, aiModelDTOPage, "records");
         aiModelDTOPage.setRecords(dtos);
         return aiModelDTOPage;
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public void delete(@NotNull Integer id) {
+        AiModel aiModel = getById(id);
+        if (aiModel == null) {
+            throw new BusinessException("模型不存在");
+        }
+        LambdaQueryWrapper<KnowledgeBase> queryWrapper = new LambdaQueryWrapper<KnowledgeBase>()
+                .eq(KnowledgeBase::getAiVectorModelId, aiModel.getId());
+        boolean exists = knowledgeBaseService.exists(queryWrapper);
+        if (exists) {
+            throw new BusinessException("模型正在被使用，无法删除");
+        }
+
+        boolean remove = removeById(id);
+        if (!remove) {
+            throw new BusinessException("删除模型失败");
+        }
+        boolean b = aiModelConfigService.removeByModelId(id);
+        if (!b) {
+            throw new BusinessException("删除模型配置失败");
+        }
+
+    }
+
+    public void updateAiModel(AiModelDTO dto) {
+        AiModel aiModel = getById(dto.getId());
+        if (aiModel == null) {
+            throw new BusinessException("AI模型不存在");
+        }
+        LambdaQueryWrapper<KnowledgeBase> queryWrapper = new LambdaQueryWrapper<KnowledgeBase>()
+                .eq(KnowledgeBase::getAiVectorModelId, aiModel.getId());
+        boolean exists = knowledgeBaseService.exists(queryWrapper);
+        if (exists && !aiModel.getModelType().equals(dto.getModelType().name())) {
+            throw new BusinessException("模型正在被使用，无法修改模型类型！");
+        }
+        BeanUtils.copyProperties(dto, aiModel);
+        aiModel.setId(dto.getId());
+        boolean b = updateById(aiModel);
+        if (!b) {
+            throw new BusinessException("更新AI模型失败");
+        }
+        AiModelConfig modelConfig = aiModelConfigService.getByModelId(aiModel.getId());
+        Integer id = modelConfig.getId();
+        Integer modelId = modelConfig.getModelId();
+        AiModelConfig config = dto.getConfig();
+        BeanUtils.copyProperties(config, modelConfig);
+        modelConfig.setId(id);
+        modelConfig.setModelId(modelId);
+        boolean update = aiModelConfigService.updateById(modelConfig);
+        if (!update) {
+            throw new BusinessException("更新AI模型配置失败");
+        }
     }
 }
 

@@ -9,7 +9,7 @@
         <div class="user-menu">
           <a-dropdown>
             <span class="user-info">
-              <a-avatar :size="small">{{ userStore.userInfo?.username?.[0]?.toUpperCase() }}</a-avatar>
+              <a-avatar size="small">{{ userStore.userInfo?.username?.[0]?.toUpperCase() }}</a-avatar>
               <span class="username">{{ userStore.userInfo?.nickname || userStore.userInfo?.username }}</span>
               <DownOutlined />
             </span>

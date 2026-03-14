@@ -1,11 +1,11 @@
 package com.github.cloudgyb.ai.knowledge.server.modules.kb.service;
 
-import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.github.cloudgyb.ai.knowledge.server.modules.ai.AiModelType;
 import com.github.cloudgyb.ai.knowledge.server.modules.ai.domain.AiModel;
 import com.github.cloudgyb.ai.knowledge.server.modules.ai.service.AiModelService;
+import com.github.cloudgyb.ai.knowledge.server.modules.commons.BusinessException;
 import com.github.cloudgyb.ai.knowledge.server.modules.kb.KnowledgeBaseType;
 import com.github.cloudgyb.ai.knowledge.server.modules.kb.domain.KnowledgeBase;
 import com.github.cloudgyb.ai.knowledge.server.modules.kb.dto.KnowledgeBaseAddDTO;
@@ -48,11 +48,11 @@ public class KnowledgeBaseManageService {
     private void validateAiVectorModelId(Integer aiVectorModelId) {
         AiModel aiModel = aiModelService.getById(aiVectorModelId);
         if (aiModel == null) {
-            throw new RuntimeException("向量模型不存在");
+            throw new BusinessException("向量模型不存在");
         }
         String modelType = aiModel.getModelType();
         if (!AiModelType.VECTOR.name().equals(modelType)) {
-            throw new RuntimeException("向量模型类型错误");
+            throw new BusinessException("向量模型类型错误");
         }
     }
 
@@ -76,7 +76,7 @@ public class KnowledgeBaseManageService {
     public void deleteKnowledgeBase(Integer id) {
         KnowledgeBase knowledgeBase = knowledgeBaseService.getById(id);
         if (knowledgeBase == null) {
-            throw new RuntimeException("知识库不存在");
+            throw new BusinessException("知识库不存在");
         }
         knowledgeBaseDocService.delDocByKbId(id);
     }

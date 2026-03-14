@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.github.cloudgyb.ai.knowledge.server.modules.ai.domain.AiModelConfig;
 import com.github.cloudgyb.ai.knowledge.server.modules.ai.mapper.AiModelConfigMapper;
+import jakarta.validation.constraints.NotNull;
 import org.springframework.stereotype.Service;
 
 /**
@@ -18,6 +19,10 @@ public class AiModelConfigService extends ServiceImpl<AiModelConfigMapper, AiMod
     public AiModelConfig getByModelId(Integer modelId) {
         return getOne(new LambdaQueryWrapper<AiModelConfig>()
                 .eq(AiModelConfig::getModelId, modelId).last("LIMIT 1"));
+    }
+
+    public boolean removeByModelId(@NotNull Integer id) {
+        return remove(new LambdaQueryWrapper<AiModelConfig>().eq(AiModelConfig::getModelId, id));
     }
 }
 

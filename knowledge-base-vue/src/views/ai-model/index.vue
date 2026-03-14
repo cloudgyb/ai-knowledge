@@ -42,7 +42,7 @@
         <a-col v-for="model in aiModelList" :key="model.id" :xs="24" :sm="12" :md="8" :lg="6">
           <a-card size="small" hoverable class="model-card">
             <template #title>
-              <a-typography-title :level="5" style="margin: 0">
+              <a-typography-title :level="5" style="margin: 0;display:flex;align-items: center">
                 <img :src="model.provider?.logoUrl" :alt="model.provider?.providerCompany"
                      :title="model.provider?.providerCompany"
                      style="width: 40px">
@@ -50,7 +50,7 @@
               </a-typography-title>
             </template>
             <template #extra>
-              <div style="display: flex">
+              <div style="display: flex;width:40px;align-items: center;justify-content: space-between">
                 <a-popconfirm
                     title="确定删除该模型吗？"
                     ok-text="确定"
@@ -59,7 +59,7 @@
                 >
                   <DeleteOutlined key="delete" style="color: #ff4d4f"/>
                 </a-popconfirm>
-                <edit-outlined key="edit" @click="handleEdit(model)"/>
+                <edit-outlined key="edit" @click="handleEdit(model)" style="color: #1677ff"/>
               </div>
             </template>
             <a-card-meta @click="handleEdit(model)">
@@ -124,23 +124,12 @@
             :md="8"
             :lg="6"
         >
-          <a-card
-              hoverable
-              class="provider-card"
-              @click="selectProvider(provider)"
-          >
+          <a-card hoverable class="provider-card" @click="selectProvider(provider)">
             <template #cover>
               <div class="provider-logo">
-                <img
-                    v-if="provider.logoUrl"
-                    :src="provider.logoUrl"
-                    :alt="provider.providerName"
-                    style="max-width: 80px; max-height: 80px;width: 80px; height: 80px;"
-                />
-                <ApiOutlined
-                    v-else
-                    style="font-size: 48px; color: #1890ff"
-                />
+                <img v-if="provider.logoUrl" :src="provider.logoUrl" :alt="provider.providerName"
+                     style="max-width: 80px; max-height: 80px;width: 80px; height: 80px;"/>
+                <ApiOutlined v-else style="font-size: 48px; color: #1890ff"/>
               </div>
             </template>
             <a-card-meta>
@@ -440,9 +429,8 @@ const handleDelete = async (id: number | undefined) => {
       message.success('删除成功')
       await loadModels()
     }
-  } catch (error) {
-    console.error('删除失败:', error)
-    message.error('删除失败')
+  } catch (error: any) {
+    message.error(error.message || '删除失败')
   }
 }
 
@@ -473,15 +461,11 @@ const handleSubmit = async () => {
     modalVisible.value = false
     await loadModels()
   } catch (error: any) {
-    if (error.message?.includes('JSON')) {
-      message.error('配置信息必须是有效的 JSON 格式')
-    }
     if (formData.value.id) {
-      message.error('更新失败')
+      message.error(error.message || '更新失败')
     } else {
-      message.error('添加失败')
+      message.error(error.message || '添加失败')
     }
-    console.error('提交失败:', error)
   } finally {
     submitLoading.value = false
   }
@@ -515,8 +499,7 @@ onMounted(() => {
   padding: 0;
 }
 
-.search-card,
-.toolbar-card {
+.search-card {
   margin-bottom: 16px;
 }
 
@@ -524,22 +507,6 @@ onMounted(() => {
   height: 100%;
   border: #ccc 1px solid;
   box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.15);
-}
-
-.model-cover {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 50px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: #fff;
-}
-
-.provider-info,
-.status-info {
-  margin-top: 8px;
-  font-size: 12px;
-  color: rgba(0, 0, 0, 0.65);
 }
 
 :deep(.ant-card-meta-detail), :deep(.ant-card-meta-title) {

@@ -28,13 +28,13 @@ export const modelApi = {
     },
 
     // 更新 AI 模型
-    update(data: any) {
-        return request.post('/ai/model/update', data)
+    update(data: any): Promise<ApiResponse<any>> {
+        return request.put('/ai/model/update', data)
     },
 
     // 删除 AI 模型
     delete(id: number): Promise<ApiResponse<any>> {
-        return request.post('/ai/model/delete', null, {params: {id}})
+        return request.delete('/ai/model', {params: {id}})
     },
 
     // 获取 AI 模型供应商列表

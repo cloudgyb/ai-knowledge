@@ -41,7 +41,7 @@ export const knowledgeBaseApi = {
     },
 
     // 删除知识库
-    delete(id: number) {
+    delete(id: number): Promise<ApiResponse<any>> {
         return request.post('/kb/delete', null, {params: {id}})
     }
 }

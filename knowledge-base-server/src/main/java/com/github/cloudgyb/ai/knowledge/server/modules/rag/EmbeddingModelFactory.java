@@ -4,6 +4,7 @@ import com.github.cloudgyb.ai.knowledge.server.modules.ai.AIModelProviders;
 import com.github.cloudgyb.ai.knowledge.server.modules.ai.domain.AiModel;
 import com.github.cloudgyb.ai.knowledge.server.modules.ai.domain.AiModelConfig;
 import com.github.cloudgyb.ai.knowledge.server.modules.ai.service.AiModelConfigService;
+import com.github.cloudgyb.ai.knowledge.server.modules.commons.BusinessException;
 import com.github.cloudgyb.ai.knowledge.server.modules.sys.ai.domain.SysAiModelProvider;
 import com.github.cloudgyb.ai.knowledge.server.modules.sys.ai.service.SysAiModelProviderService;
 import dev.langchain4j.community.model.dashscope.QwenEmbeddingModel;
@@ -41,7 +42,7 @@ public class EmbeddingModelFactory {
         if (providerId != 0) {
             aiModelProvider = sysAiModelProviderService.getById(providerId);
             if (aiModelProvider == null) {
-                throw new RuntimeException("知识库AI向量模型提供商不存在！");
+                throw new BusinessException("知识库AI向量模型提供商不存在！");
             }
             providerCode = aiModelProvider.getProviderCode();
         }

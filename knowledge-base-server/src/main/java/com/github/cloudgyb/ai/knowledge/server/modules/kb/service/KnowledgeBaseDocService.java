@@ -6,6 +6,7 @@ import com.github.cloudgyb.ai.knowledge.server.config.KnowledgeBaseDocStoragePro
 import com.github.cloudgyb.ai.knowledge.server.modules.ai.AiModelType;
 import com.github.cloudgyb.ai.knowledge.server.modules.ai.domain.AiModel;
 import com.github.cloudgyb.ai.knowledge.server.modules.ai.service.AiModelService;
+import com.github.cloudgyb.ai.knowledge.server.modules.commons.BusinessException;
 import com.github.cloudgyb.ai.knowledge.server.modules.kb.DocStatus;
 import com.github.cloudgyb.ai.knowledge.server.modules.kb.DocType;
 import com.github.cloudgyb.ai.knowledge.server.modules.kb.domain.KnowledgeBase;
@@ -89,7 +90,7 @@ public class KnowledgeBaseDocService extends ServiceImpl<KnowledgeBaseDocMapper,
         try {
             file.transferTo(targetFile);
         } catch (IOException e) {
-            throw new RuntimeException("保存文件失败！", e);
+            throw new BusinessException("保存文件失败！", e);
         }
         return targetFile;
     }
@@ -97,16 +98,16 @@ public class KnowledgeBaseDocService extends ServiceImpl<KnowledgeBaseDocMapper,
     private void vectoringDoc(Integer kbId, Integer docId, File targetFile) {
         KnowledgeBase knowledgeBase = knowledgeBaseService.getById(kbId);
         if (knowledgeBase == null) {
-            throw new RuntimeException("知识库不存在");
+            throw new BusinessException("知识库不存在");
         }
         Integer aiVectorModelId = knowledgeBase.getAiVectorModelId();
         AiModel aiModel = aiModelService.getById(aiVectorModelId);
         if (aiModel == null) {
-            throw new RuntimeException("知识库AI向量模型不存在！");
+            throw new BusinessException("知识库AI向量模型不存在！");
         }
         String modelType = aiModel.getModelType();
         if (!AiModelType.VECTOR.name().equals(modelType)) {
-            throw new RuntimeException("知识库AI向量模型类型不正确！");
+            throw new BusinessException("知识库AI向量模型类型不正确！");
         }
         EmbeddingModel embeddingModel = embeddingModelFactory.create(aiModel);
         EmbeddingStore<TextSegment> embeddingStore = embeddingStoreFactory.create(embeddingModel.dimension());
@@ -126,7 +127,7 @@ public class KnowledgeBaseDocService extends ServiceImpl<KnowledgeBaseDocMapper,
         knowledgeBaseDoc.setStatus(DocStatus.VECTORIZED.name());
         boolean b = this.updateById(knowledgeBaseDoc);
         if (!b) {
-            throw new RuntimeException("更新文档失败！");
+            throw new BusinessException("更新文档失败！");
         }
     }
 
@@ -135,14 +136,14 @@ public class KnowledgeBaseDocService extends ServiceImpl<KnowledgeBaseDocMapper,
         if (knowledgeBase != null) {
             return;
         }
-        throw new RuntimeException("知识库不存在");
+        throw new BusinessException("知识库不存在");
     }
 
     @Transactional(rollbackFor = Exception.class)
     public void updateDoc(Integer id, String title, Boolean enable, MultipartFile file) {
         KnowledgeBaseDoc knowledgeBaseDoc = getById(id);
         if (knowledgeBaseDoc == null) {
-            throw new RuntimeException("文档不存在");
+            throw new BusinessException("文档不存在");
         }
 
         KnowledgeBaseDoc updateKnowledgeBaseDoc = new KnowledgeBaseDoc();
@@ -152,7 +153,7 @@ public class KnowledgeBaseDocService extends ServiceImpl<KnowledgeBaseDocMapper,
         if (file == null) {
             boolean b = updateById(updateKnowledgeBaseDoc);
             if (!b) {
-                throw new RuntimeException("更新文档失败！");
+                throw new BusinessException("更新文档失败！");
             }
         }
         if (file != null) {
@@ -172,7 +173,7 @@ public class KnowledgeBaseDocService extends ServiceImpl<KnowledgeBaseDocMapper,
             updateKnowledgeBaseDoc.setStatus(DocStatus.VECTORIZING.name());
             boolean b = updateById(updateKnowledgeBaseDoc);
             if (!b) {
-                throw new RuntimeException("更新文档失败！");
+                throw new BusinessException("更新文档失败！");
             }
             threadPoolTaskExecutor.submit(() -> vectoringDoc(knowledgeBaseDoc.getKbId(), id, savedFile));
         }
@@ -188,11 +189,11 @@ public class KnowledgeBaseDocService extends ServiceImpl<KnowledgeBaseDocMapper,
     public void delDoc(@NotNull Integer id) {
         KnowledgeBaseDoc knowledgeBaseDoc = getById(id);
         if (knowledgeBaseDoc == null) {
-            throw new RuntimeException("文档不存在");
+            throw new BusinessException("文档不存在");
         }
         boolean b = removeById(id);
         if (!b) {
-            throw new RuntimeException("删除文档失败！");
+            throw new BusinessException("删除文档失败！");
         }
         String filepath = knowledgeBaseDoc.getFilepath();
         if (filepath.startsWith(knowledgeBaseDocStorageProperties.getPath())) {
@@ -204,16 +205,16 @@ public class KnowledgeBaseDocService extends ServiceImpl<KnowledgeBaseDocMapper,
         }
         KnowledgeBase knowledgeBase = knowledgeBaseService.getById(knowledgeBaseDoc.getKbId());
         if (knowledgeBase == null) {
-            throw new RuntimeException("知识库不存在");
+            throw new BusinessException("知识库不存在");
         }
         Integer aiVectorModelId = knowledgeBase.getAiVectorModelId();
         AiModel aiModel = aiModelService.getById(aiVectorModelId);
         if (aiModel == null) {
-            throw new RuntimeException("知识库AI向量模型不存在！");
+            throw new BusinessException("知识库AI向量模型不存在！");
         }
         String modelType = aiModel.getModelType();
         if (!AiModelType.VECTOR.name().equals(modelType)) {
-            throw new RuntimeException("知识库AI向量模型类型不正确！");
+            throw new BusinessException("知识库AI向量模型类型不正确！");
         }
         EmbeddingModel embeddingModel = embeddingModelFactory.create(aiModel);
         EmbeddingStore<TextSegment> embeddingStore = embeddingStoreFactory.create(embeddingModel.dimension());

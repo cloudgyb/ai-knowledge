@@ -1,21 +1,15 @@
 package com.github.cloudgyb.ai.knowledge.server.modules.ai.controller;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.github.cloudgyb.ai.knowledge.server.modules.ai.AiModelType;
-import com.github.cloudgyb.ai.knowledge.server.modules.ai.domain.AiModel;
 import com.github.cloudgyb.ai.knowledge.server.modules.ai.dto.AiModelDTO;
 import com.github.cloudgyb.ai.knowledge.server.modules.ai.service.AiModelService;
 import com.github.cloudgyb.ai.knowledge.server.modules.commons.ApiResponse;
 import com.github.cloudgyb.ai.knowledge.server.modules.commons.dto.AntDesignSelectOption;
 import com.github.cloudgyb.ai.knowledge.server.modules.commons.validation.Group;
 import jakarta.validation.constraints.NotNull;
-import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.BeanUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 /**
  * AI模型管理
@@ -54,6 +48,18 @@ public class AiModelController {
     @PostMapping
     public ApiResponse<Void> add(@Validated(Group.Add.class) @RequestBody AiModelDTO dto) {
         aiModelService.addAiModel(dto);
+        return ApiResponse.success();
+    }
+    @PutMapping
+    public ApiResponse<Void> update(@Validated(Group.Update.class) @RequestBody AiModelDTO dto) {
+        aiModelService.updateAiModel(dto);
+        return ApiResponse.success();
+    }
+
+
+    @DeleteMapping
+    public ApiResponse<Void> delete(@NotNull Integer id) {
+        aiModelService.delete(id);
         return ApiResponse.success();
     }
 }

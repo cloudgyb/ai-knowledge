@@ -48,7 +48,7 @@
         <a-col v-for="kb in knowledgeBaseList" :key="kb.id" :xs="24" :sm="12" :md="8" :lg="6">
           <a-card hoverable class="kb-card" size="small">
             <template #extra>
-              <div style="width: 50px;display: flex;justify-content: space-between">
+              <div style="width: 40px;display: flex;justify-content: space-between">
                 <a-popconfirm
                     title="确定删除该知识库吗？"
                     ok-text="确定"
@@ -62,10 +62,10 @@
               </div>
             </template>
             <template #title>
-              <div style="display: flex;align-items: center">
-                <BookTwoTone style="padding-right: 20px;font-size: 30px"/>
-                <a-typography-title :level="5" style="margin: 0">{{ kb.name }}</a-typography-title>
-              </div>
+              <a-typography-title :level="5" style="margin: 0;display:flex;align-items: center">
+                <BookTwoTone style="padding-right: 10px;font-size: 30px"/>
+                {{ kb.name }}
+              </a-typography-title>
             </template>
             <div @click="showDocModel(kb)">
               <div class="status-info">
@@ -128,7 +128,8 @@
           </a-select>
         </a-form-item>
         <a-form-item label="AI向量模型" name="aiVectorModelId">
-          <a-select v-model:value="formData.aiVectorModelId" placeholder="请选择知识库类型">
+          <a-select v-model:value="formData.aiVectorModelId" placeholder="请选择知识库类型"
+                    :loading="aiVectorModelLoading" :disabled="aiVectorModelLoading">
             <a-select-option v-for="model in AiVectorModels" :key="model.id" :value="model.id">
               {{ model.modelName }} <span style="color: #b1b1b1">({{ model.provider?.providerName }})</span>
             </a-select-option>
@@ -167,10 +168,8 @@ import {
   RedoOutlined,
   PlusOutlined,
   DeleteOutlined,
-  FolderOutlined,
   BookTwoTone,
-  BookFilled,
-  FolderAddOutlined, EditOutlined
+  EditOutlined
 } from '@ant-design/icons-vue'
 import {knowledgeBaseApi} from '@/api/knowledgeBase'
 import type {KnowledgeBase} from '@/api/knowledgeBase'
@@ -291,21 +290,29 @@ const handleAdd = async () => {
   await loadAiVectorModels()
   modalVisible.value = true
 }
-
+const aiVectorModelLoading = ref<boolean>(false)
 // 编辑
-const handleEdit = (kb: KnowledgeBase) => {
+const handleEdit = async (kb: KnowledgeBase) => {
   modalTitle.value = '编辑知识库'
   formData.value = {...kb}
   modalVisible.value = true
+  aiVectorModelLoading.value = true
+  formData.value.aiVectorModelId = undefined
+  try {
+    await loadAiVectorModels()
+  } finally {
+    aiVectorModelLoading.value = false
+  }
+  formData.value.aiVectorModelId = kb.aiVectorModelId
 }
 
 // 删除
 const handleDelete = async (id: number) => {
   try {
     const res = await knowledgeBaseApi.delete(id)
-    if (res.code === 200) {
+    if (res.code === '200') {
       message.success('删除成功')
-      loadKnowledgeBases()
+      await loadKnowledgeBases()
     }
   } catch (error) {
     console.error('删除失败:', error)
