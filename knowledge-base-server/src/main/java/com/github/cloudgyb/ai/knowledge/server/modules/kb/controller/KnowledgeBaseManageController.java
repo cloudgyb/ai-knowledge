@@ -3,6 +3,7 @@ package com.github.cloudgyb.ai.knowledge.server.modules.kb.controller;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.github.cloudgyb.ai.knowledge.server.modules.commons.ApiResponse;
 import com.github.cloudgyb.ai.knowledge.server.modules.commons.validation.Group;
+import com.github.cloudgyb.ai.knowledge.server.modules.kb.KnowledgeBaseType;
 import com.github.cloudgyb.ai.knowledge.server.modules.kb.domain.KnowledgeBase;
 import com.github.cloudgyb.ai.knowledge.server.modules.kb.dto.KnowledgeBaseAddDTO;
 import com.github.cloudgyb.ai.knowledge.server.modules.kb.service.KnowledgeBaseManageService;
@@ -29,13 +30,14 @@ public class KnowledgeBaseManageController {
     @GetMapping("/list")
     public ApiResponse<Page<KnowledgeBase>> getKnowledgeBaseList(@Param("pageNum") Integer pageNum,
                                                                  @Param("pageSize") Integer pageSize,
+                                                                 @Param("type") KnowledgeBaseType type,
                                                                  @Param("name") String name) {
-        Page<KnowledgeBase> page = knowledgeBaseManageService.page(pageNum, pageSize, name);
+        Page<KnowledgeBase> page = knowledgeBaseManageService.page(pageNum, pageSize,type, name);
         return ApiResponse.success(page);
     }
 
     @PostMapping("/add")
-    public ApiResponse<Void> createKnowledgeBase(@RequestBody KnowledgeBaseAddDTO dto) {
+    public ApiResponse<Void> createKnowledgeBase(@Validated(Group.Add.class) @RequestBody KnowledgeBaseAddDTO dto) {
         knowledgeBaseManageService.addKnowledgeBase(dto);
         return ApiResponse.success();
     }

@@ -3,8 +3,10 @@ package com.github.cloudgyb.ai.knowledge.server.modules.kb.service;
 import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.github.cloudgyb.ai.knowledge.server.modules.ai.AiModelType;
 import com.github.cloudgyb.ai.knowledge.server.modules.ai.domain.AiModel;
 import com.github.cloudgyb.ai.knowledge.server.modules.ai.service.AiModelService;
+import com.github.cloudgyb.ai.knowledge.server.modules.kb.KnowledgeBaseType;
 import com.github.cloudgyb.ai.knowledge.server.modules.kb.domain.KnowledgeBase;
 import com.github.cloudgyb.ai.knowledge.server.modules.kb.dto.KnowledgeBaseAddDTO;
 import org.apache.commons.lang3.StringUtils;
@@ -40,16 +42,18 @@ public class KnowledgeBaseManageService {
         validateAiVectorModelId(aiVectorModelId);
 
         KnowledgeBase knowledgeBase = dto.toKnowledgeBase();
-        knowledgeBase.setCreateTime(new Date());
         knowledgeBaseService.save(knowledgeBase);
     }
 
     private void validateAiVectorModelId(Integer aiVectorModelId) {
         AiModel aiModel = aiModelService.getById(aiVectorModelId);
-        if (aiModel != null) {
-            return;
+        if (aiModel == null) {
+            throw new RuntimeException("向量模型不存在");
         }
-        throw new RuntimeException("向量模型不存在");
+        String modelType = aiModel.getModelType();
+        if (!AiModelType.VECTOR.name().equals(modelType)) {
+            throw new RuntimeException("向量模型类型错误");
+        }
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -59,10 +63,14 @@ public class KnowledgeBaseManageService {
         knowledgeBaseService.updateById(knowledgeBase);
     }
 
-    public Page<KnowledgeBase> page(Integer pageNum, Integer pageSize, String name) {
-        Wrapper<KnowledgeBase> queryWrapper = StringUtils.isNotBlank(name) ?
-                new LambdaQueryWrapper<KnowledgeBase>().like(KnowledgeBase::getName, name) : null;
-        return knowledgeBaseService.page(new Page<>(pageNum, pageSize), queryWrapper);
+    public Page<KnowledgeBase> page(Integer pageNum, Integer pageSize, KnowledgeBaseType type, String name) {
+        LambdaQueryWrapper<KnowledgeBase> queryWrapper = new LambdaQueryWrapper<KnowledgeBase>()
+                .eq(type != null, KnowledgeBase::getType, type)
+                .like(StringUtils.isNotBlank(name), KnowledgeBase::getName, name);
+        Page<KnowledgeBase> page = knowledgeBaseService.page(new Page<>(pageNum, pageSize), queryWrapper);
+        page.getRecords().forEach(kb ->
+                kb.setAiVectorModel(aiModelService.getById(kb.getAiVectorModelId())));
+        return page;
     }
 
     public void deleteKnowledgeBase(Integer id) {

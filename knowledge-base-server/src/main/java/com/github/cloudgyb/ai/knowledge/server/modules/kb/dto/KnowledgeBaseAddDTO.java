@@ -5,9 +5,9 @@ import com.github.cloudgyb.ai.knowledge.server.modules.kb.KnowledgeBaseType;
 import com.github.cloudgyb.ai.knowledge.server.modules.kb.domain.KnowledgeBase;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import lombok.Getter;
+import lombok.Setter;
 import org.hibernate.validator.constraints.Length;
-
-import java.util.Date;
 
 /**
  * 知识库添加DTO
@@ -15,6 +15,8 @@ import java.util.Date;
  * @author cloudgyb
  * @since 2026/3/2 21:56
  */
+@Getter
+@Setter
 public class KnowledgeBaseAddDTO {
     @NotNull(message = "id不能为空", groups = {Group.Update.class})
     private Integer id;
@@ -22,7 +24,7 @@ public class KnowledgeBaseAddDTO {
     /**
      * 知识库名称
      */
-    @NotBlank(message = "名称不能为空")
+    @NotBlank(message = "名称不能为空", groups = {Group.Add.class, Group.Update.class})
     @Length(max = 50, message = "名称长度不能超过50")
     private String name;
 
@@ -49,61 +51,13 @@ public class KnowledgeBaseAddDTO {
     @NotNull(message = "类型不能为空")
     private KnowledgeBaseType type;
 
-    public Integer getId() {
-        return id;
-    }
-
-    public void setId(Integer id) {
-        this.id = id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getRemark() {
-        return remark;
-    }
-
-    public void setRemark(String remark) {
-        this.remark = remark;
-    }
-
-    public Integer getAiVectorModelId() {
-        return aiVectorModelId;
-    }
-
-    public void setAiVectorModelId(Integer aiVectorModelId) {
-        this.aiVectorModelId = aiVectorModelId;
-    }
-
-    public Integer getStatus() {
-        return status;
-    }
-
-    public void setStatus(Integer status) {
-        this.status = status;
-    }
-
-    public KnowledgeBaseType getType() {
-        return type;
-    }
-
-    public void setType(KnowledgeBaseType type) {
-        this.type = type;
-    }
-
     public KnowledgeBase toKnowledgeBase() {
         KnowledgeBase kb = new KnowledgeBase();
         kb.setName(this.name);
         kb.setRemark(this.remark);
         kb.setAiVectorModelId(this.aiVectorModelId);
         kb.setStatus(this.status);
-        kb.setType(this.type.getType());
+        kb.setType(this.type.name());
         return kb;
     }
 }

@@ -8,6 +8,7 @@ import dev.langchain4j.store.embedding.pgvector.PgVectorEmbeddingStore;
 import jakarta.annotation.PreDestroy;
 import org.springframework.stereotype.Component;
 
+import java.util.Collections;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -33,6 +34,7 @@ public class EmbeddingStoreFactory {
     private EmbeddingStore<TextSegment> doCreate(int dimension) {
         DefaultMetadataStorageConfig storageConfig = DefaultMetadataStorageConfig.builder()
                 .storageMode(properties.getMetadataStorageMode())
+                .columnDefinitions(Collections.singletonList("metadata JSON NULL"))
                 .build();
         return PgVectorEmbeddingStore.builder()
                 .host(properties.getHost())

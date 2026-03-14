@@ -10,7 +10,6 @@ import com.github.cloudgyb.ai.knowledge.server.modules.kb.DocStatus;
 import com.github.cloudgyb.ai.knowledge.server.modules.kb.DocType;
 import com.github.cloudgyb.ai.knowledge.server.modules.kb.domain.KnowledgeBase;
 import com.github.cloudgyb.ai.knowledge.server.modules.kb.domain.KnowledgeBaseDoc;
-import com.github.cloudgyb.ai.knowledge.server.modules.kb.dto.KnowledgeBaseAddDTO;
 import com.github.cloudgyb.ai.knowledge.server.modules.kb.mapper.KnowledgeBaseDocMapper;
 import com.github.cloudgyb.ai.knowledge.server.modules.rag.EmbeddingModelFactory;
 import com.github.cloudgyb.ai.knowledge.server.modules.rag.EmbeddingStoreFactory;
@@ -27,7 +26,6 @@ import dev.langchain4j.store.embedding.filter.MetadataFilterBuilder;
 import jakarta.validation.constraints.NotNull;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
-import org.jspecify.annotations.NonNull;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -183,9 +181,7 @@ public class KnowledgeBaseDocService extends ServiceImpl<KnowledgeBaseDocMapper,
     @Transactional(rollbackFor = Exception.class)
     public void delDocByKbId(@NotNull Integer kbId) {
         List<KnowledgeBaseDoc> list = list(new LambdaQueryWrapper<KnowledgeBaseDoc>().eq(KnowledgeBaseDoc::getKbId, kbId));
-        list.forEach(knowledgeBaseDoc -> {
-            delDoc(knowledgeBaseDoc.getId());
-        });
+        list.forEach(knowledgeBaseDoc -> delDoc(knowledgeBaseDoc.getId()));
     }
 
     @Transactional(rollbackFor = Exception.class)
