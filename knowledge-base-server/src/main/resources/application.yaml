@@ -23,6 +23,11 @@ spring:
         ip: 10.66.1.54
         weight: 1
         cluster-name: DEFAULT
+  servlet:
+    multipart:
+      max-file-size: 10485760
+      location: ./tmp
+
 mybatis-plus:
   global-config:
     db-config:
@@ -37,7 +42,7 @@ mybatis-plus:
 knowledge-base:
   doc:
     storage:
-      path: /data/knowledge-base/doc
+      path: ./knowledge-base/doc
 
 ai:
   embedding:

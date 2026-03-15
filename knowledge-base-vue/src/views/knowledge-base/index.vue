@@ -152,16 +152,74 @@
       <template #footer>
         <a-button @click="()=> {docModelVisible = false}" type="primary">关闭</a-button>
       </template>
-      <p>发的所发生的发送到</p>
-      <p>发的所发生的发送到</p>
-      <p>发的所发生的发送到</p>
+      <a-card>
+        <a-tabs v-model:activeKey="docManageTabActiveKey" tabPosition="left">
+          <a-tab-pane key="1" tab="文档管理">
+            <a-card :bordered="false">
+              <a-form ref="docSearchFormRef" :model="docSearchFormData" layout="inline">
+                <a-form-item label="文档名称" name="name">
+                  <a-input v-model:value="docSearchFormData.name" placeholder="请输入文档名称" style="width: 200px"/>
+                </a-form-item>
+                <a-form-item>
+                  <a-button type="primary">
+                    <template #icon>
+                      <SearchOutlined/>
+                    </template>
+                    搜索
+                  </a-button>
+                </a-form-item>
+                <a-form-item style="position: absolute;right: 0">
+                  <a-button type="primary" @click="showUploadDocModel">
+                    <template #icon>
+                      <UploadOutlined/>
+                    </template>
+                    上传文档
+                  </a-button>
+                </a-form-item>
+              </a-form>
+            </a-card>
+            <a-card>
+              <a-row :gutter="[16, 16]">
+                <a-col v-for="doc in docList" :key="doc.id" :xs="24" :sm="12" :md="8" :lg="6">
+                  <a-card hoverable class="kb-card" size="small">
+                    <template #extra>
+                      <div style="width: 40px;display: flex;justify-content: space-between">
+                        <a-popconfirm/>
+                      </div>
+                    </template>
+                  </a-card>
+                </a-col>
+              </a-row>
+            </a-card>
+          </a-tab-pane>
+          <a-tab-pane key="2" tab="名中测试" force-render>Content of Tab Pane 2</a-tab-pane>
+        </a-tabs>
+      </a-card>
+    </a-modal>
+    <a-modal title="上传文档" :open="uploadDocModelVisible" width="600px" @ok="handleUploadDocSubmit"
+             @cancel="()=>{uploadDocModelVisible = false}">
+      <a-form ref="uploadDocFormRef" :model="uploadDocFormData" :rules="uploadDocFormRules" layout="vertical">
+        <a-form-item label="文档标题" name="title">
+          <a-input v-model:value="uploadDocFormData.title" placeholder="输入文档标题"></a-input>
+        </a-form-item>
+        <a-form-item label="上传文件" name="fileList">
+          <a-upload-dragger name="fileList" :file-list="uploadDocFormData.fileList" :multiple="true"
+                            :before-upload="beforeDocUpload" @remove="handleDocRemove">
+            <p class="ant-upload-drag-icon">
+              <InboxOutlined/>
+            </p>
+            <p class="ant-upload-text">点击或拖拽上传</p>
+            <p class="ant-upload-hint">支持单个或批量上传</p>
+          </a-upload-dragger>
+        </a-form-item>
+      </a-form>
     </a-modal>
   </div>
 </template>
 
 <script setup lang="ts">
 import {ref, reactive, onMounted} from 'vue'
-import {message, type SelectProps} from 'ant-design-vue'
+import {message, type SelectProps, type UploadProps} from 'ant-design-vue'
 import dayjs from 'dayjs'
 import {
   SearchOutlined,
@@ -169,12 +227,15 @@ import {
   PlusOutlined,
   DeleteOutlined,
   BookTwoTone,
-  EditOutlined
+  EditOutlined,
+  UploadOutlined,
+  InboxOutlined
 } from '@ant-design/icons-vue'
 import {knowledgeBaseApi} from '@/api/knowledgeBase'
 import type {KnowledgeBase} from '@/api/knowledgeBase'
 import {modelApi} from '@/api/model'
 import type {AiModel} from "@/api/model/aiModelTypes";
+import {kbDocApi} from '@/api/kbDoc'
 
 // 搜索表单
 const searchForm = ref({
@@ -363,6 +424,79 @@ const formatTime = (time?: string) => {
 const docModelVisible = ref<boolean>(false)
 const showDocModel = (kb: KnowledgeBase) => {
   docModelVisible.value = true
+  uploadDocFormData.value.kbId = kb.id
+}
+const docManageTabActiveKey = ref<string>('1')
+const docSearchFormRef = ref()
+const docSearchFormData = ref<any>({
+  name: ''
+})
+const uploadDocModelTitle = ref<string>('上传文档')
+const uploadDocModelVisible = ref<boolean>(false)
+const showUploadDocModel = () => {
+  uploadDocModelVisible.value = true
+}
+
+const uploadDocFormRef = ref()
+const uploadDocFormData = ref<any>({
+  id: undefined,
+  kbId: undefined,
+  title: '',
+  fileList: []
+})
+const uploadDocSubmitLoading = ref<boolean>(false)
+const uploadDocFormRules = {
+  title: [{required: true, message: '请输入文档标题', trigger: 'blur'},
+    {max: 20, message: '文档标题长度不能超过20个字符', trigger: 'blur'}],
+  fileList: [{required: true, message: '请选择文件', trigger: 'change'},
+    {
+      validator: (rule: any, value: any) => {
+        for (let file of value) {
+          if (file.size > 10 * 1024 * 1024) {
+            return Promise.reject(new Error('文件不能超过10M'))
+          }
+        }
+        return Promise.resolve()
+      }, trigger: 'change'
+    }]
+}
+const handleDocRemove: UploadProps['onRemove'] = file => {
+  const index = uploadDocFormData.value.fileList.indexOf(file);
+  const newFileList = uploadDocFormData.value.fileList.slice();
+  newFileList.splice(index, 1);
+  uploadDocFormData.value.fileList = newFileList;
+};
+
+const beforeDocUpload: UploadProps['beforeUpload'] = file => {
+  uploadDocFormData.value.fileList = [...(uploadDocFormData.value.fileList || []), file];
+  return false
+};
+const handleUploadDocSubmit = async () => {
+  try {
+    await uploadDocFormRef.value.validateFields()
+  } catch (error: any) {
+    console.log(error)
+    message.error(error.errorFields[0].errors[0] || '验证失败')
+    return
+  }
+  const formData = new FormData();
+  for (let key in uploadDocFormData.value) {
+    if (key && key !== 'fileList' && uploadDocFormData.value[key]) {
+      formData.append(key, uploadDocFormData.value[key]);
+    }
+  }
+  uploadDocFormData.value.fileList.forEach((file: UploadProps['fileList'][]) => {
+    formData.append('files', file as any);
+  });
+  try {
+    const res = await kbDocApi.uploadDoc(formData)
+    if (res.code === '200') {
+      message.success('上传成功')
+    }
+  } catch (error: any) {
+    message.error(error.message || '上传文档失败')
+  }
+  uploadDocModelVisible.value = false
 }
 
 onMounted(() => {

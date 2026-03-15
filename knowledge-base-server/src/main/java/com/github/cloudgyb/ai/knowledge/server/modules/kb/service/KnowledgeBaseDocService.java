@@ -34,6 +34,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -66,8 +67,18 @@ public class KnowledgeBaseDocService extends ServiceImpl<KnowledgeBaseDocMapper,
     }
 
     @Transactional(rollbackFor = Exception.class)
-    public int addDoc(Integer kbId, String title, MultipartFile file) {
+    public List<Integer> addDoc(Integer kbId, String title, MultipartFile[] files) {
         validateKbId(kbId);
+        ArrayList<Integer> docIds = new ArrayList<>(files.length);
+        for (MultipartFile file : files) {
+            Integer id = addDoc(kbId, title, file);
+            docIds.add(id);
+        }
+
+        return docIds;
+    }
+
+    private Integer addDoc(Integer kbId, String title, MultipartFile file) {
         File targetFile = saveFile(kbId, file);
         KnowledgeBaseDoc doc = new KnowledgeBaseDoc();
         doc.setTitle(title);
@@ -86,10 +97,19 @@ public class KnowledgeBaseDocService extends ServiceImpl<KnowledgeBaseDocMapper,
     private File saveFile(Integer kbId, MultipartFile file) {
         String basePath = knowledgeBaseDocStorageProperties.getPath();
         File saveDir = new File(basePath, String.valueOf(kbId));
+        // 如果目录不存在则创建
+        if (!saveDir.exists()) {
+            boolean mkdirs = saveDir.mkdirs();
+            if (!mkdirs) {
+                log.error("创建目录失败！");
+                throw new BusinessException("创建目录失败！");
+            }
+        }
         File targetFile = new File(saveDir, file.getOriginalFilename() == null ? "" : file.getOriginalFilename());
         try {
             file.transferTo(targetFile);
         } catch (IOException e) {
+            log.error("保存文件失败！", e);
             throw new BusinessException("保存文件失败！", e);
         }
         return targetFile;

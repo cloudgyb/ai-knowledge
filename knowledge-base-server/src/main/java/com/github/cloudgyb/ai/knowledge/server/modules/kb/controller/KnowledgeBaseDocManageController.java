@@ -8,6 +8,8 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
+
 /**
  * 个人知识库关联的文档管理
  *
@@ -25,11 +27,11 @@ public class KnowledgeBaseDocManageController {
     }
 
     @PostMapping("/add")
-    public ApiResponse<Integer> add(@NotNull @RequestParam("kbId") Integer kbId,
-                                    @NotBlank @RequestParam("title") String title,
-                                    @NotNull @RequestParam("file") MultipartFile file) {
-        int docId = knowledgeBaseDocService.addDoc(kbId, title, file);
-        return ApiResponse.success(docId);
+    public ApiResponse<List<Integer>> add(@NotNull @RequestParam("kbId") Integer kbId,
+                                          @NotBlank @RequestParam("title") String title,
+                                          @NotNull @RequestParam("files") MultipartFile[] files) {
+        List<Integer> docIds = knowledgeBaseDocService.addDoc(kbId, title, files);
+        return ApiResponse.success(docIds);
     }
 
     @PostMapping("/update")
