@@ -1,6 +1,7 @@
 import request from '@/utils/request'
 import type {ApiResponse, ApiResponsePagination} from "@/api/model/types";
 import type {AiModel, AiModelProvider, SysAiModel} from "@/api/model/aiModelTypes";
+import type {KnowledgeBaseDoc} from "@/api/model/knowledgeBaseTypes";
 
 export const kbDocApi = {
     uploadDoc(formData: FormData): Promise<ApiResponse<any>> {
@@ -9,12 +10,12 @@ export const kbDocApi = {
     // 获取 AI 模型供应商列表
     // 获取 AI 模型列表
     getList(params?: {
-        name?: string;
-        type?: string;
+        kbId: number;
+        title?: string;
         pageNum?: number;
         pageSize?: number
-    }): Promise<ApiResponse<ApiResponsePagination<AiModel>>> {
-        return request.get('/ai/model', {params})
+    }): Promise<ApiResponse<ApiResponsePagination<KnowledgeBaseDoc>>> {
+        return request.get('/kb/doc/list', {params})
     },
 
     // 获取 AI 模型详情

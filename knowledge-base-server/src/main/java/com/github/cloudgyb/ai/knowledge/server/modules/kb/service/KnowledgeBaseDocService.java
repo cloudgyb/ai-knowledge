@@ -1,6 +1,7 @@
 package com.github.cloudgyb.ai.knowledge.server.modules.kb.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.github.cloudgyb.ai.knowledge.server.config.KnowledgeBaseDocStorageProperties;
 import com.github.cloudgyb.ai.knowledge.server.modules.ai.AiModelType;
@@ -27,6 +28,7 @@ import dev.langchain4j.store.embedding.filter.MetadataFilterBuilder;
 import jakarta.validation.constraints.NotNull;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -67,6 +69,14 @@ public class KnowledgeBaseDocService extends ServiceImpl<KnowledgeBaseDocMapper,
         this.embeddingStoreFactory = embeddingStoreFactory;
         this.embeddingModelFactory = embeddingModelFactory;
         this.docValidationService = docValidationService;
+    }
+
+    public Page<KnowledgeBaseDoc> page(@NotNull Integer kbId, String title,
+                                       @NotNull Integer pageNum, @NotNull Integer pageSize) {
+        LambdaQueryWrapper<KnowledgeBaseDoc> queryWrapper = new LambdaQueryWrapper<KnowledgeBaseDoc>().
+                eq(KnowledgeBaseDoc::getKbId, kbId)
+                .like(StringUtils.isNotBlank(title), KnowledgeBaseDoc::getTitle, title);
+        return this.page(new Page<>(pageNum, pageSize), queryWrapper);
     }
 
     @Transactional(rollbackFor = Exception.class)

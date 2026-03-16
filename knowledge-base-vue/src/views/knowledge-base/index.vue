@@ -157,8 +157,8 @@
           <a-tab-pane key="1" tab="文档管理">
             <a-card :bordered="false">
               <a-form ref="docSearchFormRef" :model="docSearchFormData" layout="inline">
-                <a-form-item label="文档名称" name="name">
-                  <a-input v-model:value="docSearchFormData.name" placeholder="请输入文档名称" style="width: 200px"/>
+                <a-form-item label="文档名称" name="title">
+                  <a-input v-model:value="docSearchFormData.title" placeholder="请输入文档名称" style="width: 200px"/>
                 </a-form-item>
                 <a-form-item>
                   <a-button type="primary">
@@ -182,17 +182,53 @@
               <a-row :gutter="[16, 16]">
                 <a-col v-for="doc in docList" :key="doc.id" :xs="24" :sm="12" :md="8" :lg="6">
                   <a-card hoverable class="kb-card" size="small">
+                    <template #title>
+                      <a-typography-title :level="5"
+                                          style="margin: 0;display:flex;align-items: center">
+                        <BookTwoTone style="padding-right: 10px;font-size: 30px"/>
+                        <a-typography-text :content="doc.title||doc.filename"
+                                           :title="doc.title||doc.filename"
+                                           :ellipsis="true" style="width: 200px"/>
+                      </a-typography-title>
+                    </template>
                     <template #extra>
                       <div style="width: 40px;display: flex;justify-content: space-between">
-                        <a-popconfirm/>
+                        <a-popconfirm
+                            title="确定删除该文档吗？"
+                            ok-text="确定"
+                            cancel-text="取消"
+                            @confirm="handleDocDelete(doc.id)"
+                        >
+                          <DeleteOutlined key="delete" style="color: #ff4d4f" title="删除文档"/>
+                        </a-popconfirm>
+                        <edit-outlined key="edit" @click="handleDocEdit(doc)" style="color: #1677ff"
+                                       title="编辑文档基本信息"></edit-outlined>
                       </div>
                     </template>
+                    <div>
+                      <span>更新时间：{{ formatTime(doc.updateTime || doc.createTime) }}</span><br>
+                      <a-tag color="blue">{{ doc.fileType }}</a-tag>
+                      <a-tag :color="DocStatus[doc.status].color">
+                        {{ DocStatus[doc.status].text || '未知' }}
+                      </a-tag>
+                    </div>
                   </a-card>
                 </a-col>
               </a-row>
+              <div class="pagination-container">
+                <a-pagination size="small"
+                              v-model:current="docListPagination.current"
+                              v-model:page-size="docListPagination.pageSize"
+                              :total="docListPagination.total"
+                              show-size-changer
+                              show-quick-jumper
+                              :show-total="docListPagination.showTotal"
+                              @change="handleDocPageSizeChange"
+                />
+              </div>
             </a-card>
           </a-tab-pane>
-          <a-tab-pane key="2" tab="名中测试" force-render>Content of Tab Pane 2</a-tab-pane>
+          <a-tab-pane key="2" tab="命中测试" force-render>Content of Tab Pane 2</a-tab-pane>
         </a-tabs>
       </a-card>
     </a-modal>
@@ -204,12 +240,14 @@
         </a-form-item>
         <a-form-item label="上传文件" name="fileList">
           <a-upload-dragger name="fileList" :file-list="uploadDocFormData.fileList" :multiple="true"
-                            :before-upload="beforeDocUpload" @remove="handleDocRemove">
+                            :before-upload="beforeDocUpload" @remove="handleDocRemove"
+                            accept=".txt,.doc,.docx,.md,.pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document">
             <p class="ant-upload-drag-icon">
               <InboxOutlined/>
             </p>
             <p class="ant-upload-text">点击或拖拽上传</p>
             <p class="ant-upload-hint">支持单个或批量上传</p>
+            <p class="ant-upload-hint">支持 txt,md,pdf,word(doc, docx)文件上传</p>
           </a-upload-dragger>
         </a-form-item>
       </a-form>
@@ -236,6 +274,7 @@ import type {KnowledgeBase} from '@/api/knowledgeBase'
 import {modelApi} from '@/api/model'
 import type {AiModel} from "@/api/model/aiModelTypes";
 import {kbDocApi} from '@/api/kbDoc'
+import {DocStatus, type KnowledgeBaseDoc} from "@/api/model/knowledgeBaseTypes";
 
 // 搜索表单
 const searchForm = ref({
@@ -425,11 +464,12 @@ const docModelVisible = ref<boolean>(false)
 const showDocModel = (kb: KnowledgeBase) => {
   docModelVisible.value = true
   uploadDocFormData.value.kbId = kb.id
+  loadDocList()
 }
 const docManageTabActiveKey = ref<string>('1')
 const docSearchFormRef = ref()
 const docSearchFormData = ref<any>({
-  name: ''
+  title: ''
 })
 const uploadDocModelTitle = ref<string>('上传文档')
 const uploadDocModelVisible = ref<boolean>(false)
@@ -437,6 +477,34 @@ const showUploadDocModel = () => {
   uploadDocModelVisible.value = true
 }
 
+const docList = ref<KnowledgeBaseDoc[]>([])
+const docListPagination = reactive({
+  current: 1,
+  pageSize: 10,
+  total: 0,
+  showTotal: (total: number) => `共 ${total} 条`
+})
+const loadDocList = async () => {
+  try {
+    const res = await kbDocApi.getList({
+      kbId: uploadDocFormData.value.kbId,
+      title: docSearchFormData.value.title,
+      pageNum: docListPagination.current,
+      pageSize: docListPagination.pageSize
+    })
+    if (res.code === '200') {
+      docList.value = res.data.records || []
+      docListPagination.total = res.data.total || 0
+    }
+  } catch (error) {
+    console.error('加载文档列表失败:', error)
+  }
+}
+const handleDocPageSizeChange = (current: number, size: number) => {
+  docListPagination.current = current
+  docListPagination.pageSize = size
+  loadDocList()
+}
 const uploadDocFormRef = ref()
 const uploadDocFormData = ref<any>({
   id: undefined,
