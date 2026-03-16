@@ -14,6 +14,7 @@ package com.github.cloudgyb.ai.knowledge.server.modules.ai;
  * @since 2026/3/10 14:19
  */
 public enum AIModelProviders {
+    System,
     Claude,
     DeepSeek,
     OpenAI,

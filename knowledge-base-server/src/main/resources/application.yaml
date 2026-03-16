@@ -26,7 +26,7 @@ spring:
   servlet:
     multipart:
       max-file-size: 10485760
-      location: ./tmp
+      location: D:\IdeaProjects\ai-knowledge\
 
 mybatis-plus:
   global-config:
@@ -42,15 +42,15 @@ mybatis-plus:
 knowledge-base:
   doc:
     storage:
-      path: ./knowledge-base/doc
+      path: ./.tmp/knowledge-base/doc
 
 ai:
   embedding:
     storage:
       pgvector:
-        host: localhost
-        port: 5432
-        database: postgres
+        host: 10.66.11.210
+        port: 15432
+        database: vectordb
         user: postgres
         password: postgres
         table: embedding_store

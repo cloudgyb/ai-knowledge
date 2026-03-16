@@ -51,23 +51,30 @@ public class KnowledgeBaseDocService extends ServiceImpl<KnowledgeBaseDocMapper,
     private final AiModelService aiModelService;
     private final EmbeddingStoreFactory embeddingStoreFactory;
     private final EmbeddingModelFactory embeddingModelFactory;
+    private final DocValidationService docValidationService;
 
     public KnowledgeBaseDocService(KnowledgeBaseService knowledgeBaseService,
                                    ThreadPoolTaskExecutor threadPoolTaskExecutor,
                                    KnowledgeBaseDocStorageProperties knowledgeBaseDocStorageProperties,
                                    AiModelService aiModelService,
                                    EmbeddingStoreFactory embeddingStoreFactory,
-                                   EmbeddingModelFactory embeddingModelFactory) {
+                                   EmbeddingModelFactory embeddingModelFactory,
+                                   DocValidationService docValidationService) {
         this.knowledgeBaseService = knowledgeBaseService;
         this.threadPoolTaskExecutor = threadPoolTaskExecutor;
         this.knowledgeBaseDocStorageProperties = knowledgeBaseDocStorageProperties;
         this.aiModelService = aiModelService;
         this.embeddingStoreFactory = embeddingStoreFactory;
         this.embeddingModelFactory = embeddingModelFactory;
+        this.docValidationService = docValidationService;
     }
 
     @Transactional(rollbackFor = Exception.class)
     public List<Integer> addDoc(Integer kbId, String title, MultipartFile[] files) {
+        if (files.length == 0) {
+            throw new BusinessException("请上传文件！");
+        }
+        docValidationService.validateFiles(files);
         validateKbId(kbId);
         ArrayList<Integer> docIds = new ArrayList<>(files.length);
         for (MultipartFile file : files) {
@@ -116,38 +123,49 @@ public class KnowledgeBaseDocService extends ServiceImpl<KnowledgeBaseDocMapper,
     }
 
     private void vectoringDoc(Integer kbId, Integer docId, File targetFile) {
-        KnowledgeBase knowledgeBase = knowledgeBaseService.getById(kbId);
-        if (knowledgeBase == null) {
-            throw new BusinessException("知识库不存在");
-        }
-        Integer aiVectorModelId = knowledgeBase.getAiVectorModelId();
-        AiModel aiModel = aiModelService.getById(aiVectorModelId);
-        if (aiModel == null) {
-            throw new BusinessException("知识库AI向量模型不存在！");
-        }
-        String modelType = aiModel.getModelType();
-        if (!AiModelType.VECTOR.name().equals(modelType)) {
-            throw new BusinessException("知识库AI向量模型类型不正确！");
-        }
-        EmbeddingModel embeddingModel = embeddingModelFactory.create(aiModel);
-        EmbeddingStore<TextSegment> embeddingStore = embeddingStoreFactory.create(embeddingModel.dimension());
-        // 删除旧的vector
-        embeddingStore.removeAll(MetadataFilterBuilder.metadataKey("docId").isEqualTo(docId));
-        Document document = FileSystemDocumentLoader.loadDocument(targetFile.getPath());
-        DocumentSplitter documentSplitter = DocumentSplitters
-                .recursive(1000, 100);
-        List<TextSegment> textSegments = documentSplitter.split(document);
-        // 设置元数据标识
-        textSegments.forEach(textSegment -> textSegment.metadata().put("docId", docId));
-        Response<List<Embedding>> listResponse = embeddingModel.embedAll(textSegments);
-        List<Embedding> embeddings = listResponse.content();
-        embeddingStore.addAll(embeddings, textSegments);
-        KnowledgeBaseDoc knowledgeBaseDoc = new KnowledgeBaseDoc();
-        knowledgeBaseDoc.setId(docId);
-        knowledgeBaseDoc.setStatus(DocStatus.VECTORIZED.name());
-        boolean b = this.updateById(knowledgeBaseDoc);
-        if (!b) {
-            throw new BusinessException("更新文档失败！");
+        try {
+            KnowledgeBase knowledgeBase = knowledgeBaseService.getById(kbId);
+            if (knowledgeBase == null) {
+                throw new BusinessException("知识库不存在");
+            }
+            Integer aiVectorModelId = knowledgeBase.getAiVectorModelId();
+            AiModel aiModel = aiModelService.getById(aiVectorModelId);
+            if (aiModel == null) {
+                throw new BusinessException("知识库AI向量模型不存在！");
+            }
+            String modelType = aiModel.getModelType();
+            if (!AiModelType.VECTOR.name().equals(modelType)) {
+                throw new BusinessException("知识库AI向量模型类型不正确！");
+            }
+            EmbeddingModel embeddingModel = embeddingModelFactory.create(aiModel);
+            EmbeddingStore<TextSegment> embeddingStore = embeddingStoreFactory.create(embeddingModel.dimension());
+            // 删除旧的vector
+            embeddingStore.removeAll(MetadataFilterBuilder.metadataKey("docId").isEqualTo(docId));
+            Document document = FileSystemDocumentLoader.loadDocument(targetFile.getPath());
+            DocumentSplitter documentSplitter = DocumentSplitters
+                    .recursive(1000, 100);
+            List<TextSegment> textSegments = documentSplitter.split(document);
+            // 设置元数据标识
+            textSegments.forEach(textSegment -> textSegment.metadata().put("docId", docId));
+            Response<List<Embedding>> listResponse = embeddingModel.embedAll(textSegments);
+            List<Embedding> embeddings = listResponse.content();
+            embeddingStore.addAll(embeddings, textSegments);
+            KnowledgeBaseDoc knowledgeBaseDoc = new KnowledgeBaseDoc();
+            knowledgeBaseDoc.setId(docId);
+            knowledgeBaseDoc.setStatus(DocStatus.VECTORIZED.name());
+            boolean b = this.updateById(knowledgeBaseDoc);
+            if (!b) {
+                throw new BusinessException("更新文档失败！");
+            }
+        } catch (Exception e) {
+            log.error("向量化文档失败！", e);
+            KnowledgeBaseDoc knowledgeBaseDoc = new KnowledgeBaseDoc();
+            knowledgeBaseDoc.setId(docId);
+            knowledgeBaseDoc.setStatus(DocStatus.FAILED.name());
+            boolean b = this.updateById(knowledgeBaseDoc);
+            if (!b) {
+                throw new BusinessException("更新文档失败！");
+            }
         }
     }
 

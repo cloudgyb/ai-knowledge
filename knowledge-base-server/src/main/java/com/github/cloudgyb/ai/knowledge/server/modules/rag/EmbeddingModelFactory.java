@@ -37,15 +37,13 @@ public class EmbeddingModelFactory {
     public EmbeddingModel create(AiModel aiModel) {
         Integer providerId = aiModel.getProviderId();
         SysAiModelProvider aiModelProvider;
-        String providerCode = "AllMiniLmL6V2";
-
-        if (providerId != 0) {
-            aiModelProvider = sysAiModelProviderService.getById(providerId);
-            if (aiModelProvider == null) {
-                throw new BusinessException("知识库AI向量模型提供商不存在！");
-            }
-            providerCode = aiModelProvider.getProviderCode();
+        String providerCode;
+        aiModelProvider = sysAiModelProviderService.getById(providerId);
+        if (aiModelProvider == null) {
+            throw new BusinessException("知识库AI向量模型提供商不存在！");
         }
+        providerCode = aiModelProvider.getProviderCode();
+
         AiModelConfig aiModelConfig = aiModelConfigService.getByModelId(aiModel.getId());
         // 根据模型提供商创建内嵌模型
         return switch (AIModelProviders.valueOf(providerCode)) {
@@ -56,8 +54,6 @@ public class EmbeddingModelFactory {
             case Ollama -> createOllamaEmbeddingModel(aiModel, aiModelConfig);
             default -> new AllMiniLmL6V2EmbeddingModel();
         };
-
-
     }
 
     private EmbeddingModel createOllamaEmbeddingModel(AiModel aiModel, AiModelConfig aiModelConfig) {
