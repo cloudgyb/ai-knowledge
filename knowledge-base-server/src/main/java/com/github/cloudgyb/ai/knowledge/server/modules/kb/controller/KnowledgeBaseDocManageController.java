@@ -54,9 +54,21 @@ public class KnowledgeBaseDocManageController {
         return ApiResponse.success();
     }
 
-    @PostMapping("/delete")
+    @DeleteMapping()
     public ApiResponse<Void> delete(@NotNull @RequestParam("id") Integer id) {
         knowledgeBaseDocService.delDoc(id);
+        return ApiResponse.success();
+    }
+
+    /**
+     * 命中测试
+     *
+     * @param kbId 知识库id
+     */
+    @PostMapping("/test")
+    public ApiResponse<Void> test(@NotNull @RequestParam("kbId") Integer kbId,
+                                  @NotBlank @RequestParam("text") String text) {
+        knowledgeBaseDocService.testDoc(kbId, text);
         return ApiResponse.success();
     }
 }

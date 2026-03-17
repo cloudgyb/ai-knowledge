@@ -161,7 +161,7 @@
                   <a-input v-model:value="docSearchFormData.title" placeholder="请输入文档名称" style="width: 200px"/>
                 </a-form-item>
                 <a-form-item>
-                  <a-button type="primary">
+                  <a-button type="primary" @click="handleDocSearch">
                     <template #icon>
                       <SearchOutlined/>
                     </template>
@@ -179,7 +179,8 @@
               </a-form>
             </a-card>
             <a-card>
-              <a-row :gutter="[16, 16]">
+              <a-empty v-if="docList.length === 0"/>
+              <a-row :gutter="[16, 16]" style="max-height: 410px;overflow-y: auto">
                 <a-col v-for="doc in docList" :key="doc.id" :xs="24" :sm="12" :md="8" :lg="6">
                   <a-card hoverable class="kb-card" size="small">
                     <template #title>
@@ -215,17 +216,19 @@
                   </a-card>
                 </a-col>
               </a-row>
-              <div class="pagination-container">
-                <a-pagination size="small"
-                              v-model:current="docListPagination.current"
-                              v-model:page-size="docListPagination.pageSize"
-                              :total="docListPagination.total"
-                              show-size-changer
-                              show-quick-jumper
-                              :show-total="docListPagination.showTotal"
-                              @change="handleDocPageSizeChange"
-                />
-              </div>
+              <template #actions>
+                <div class="pagination-container">
+                  <a-pagination size="small"
+                                v-model:current="docListPagination.current"
+                                v-model:page-size="docListPagination.pageSize"
+                                :total="docListPagination.total"
+                                show-size-changer
+                                show-quick-jumper
+                                :show-total="docListPagination.showTotal"
+                                @change="handleDocPageSizeChange"
+                  />
+                </div>
+              </template>
             </a-card>
           </a-tab-pane>
           <a-tab-pane key="2" tab="命中测试" force-render>Content of Tab Pane 2</a-tab-pane>
@@ -475,6 +478,8 @@ const uploadDocModelTitle = ref<string>('上传文档')
 const uploadDocModelVisible = ref<boolean>(false)
 const showUploadDocModel = () => {
   uploadDocModelVisible.value = true
+  uploadDocFormData.value.title = ''
+  uploadDocFormData.value.fileList = []
 }
 
 const docList = ref<KnowledgeBaseDoc[]>([])
@@ -512,6 +517,21 @@ const uploadDocFormData = ref<any>({
   title: '',
   fileList: []
 })
+const handleDocSearch = async () => {
+  await loadDocList()
+}
+const handleDocDelete = async (id: number | undefined) => {
+  try {
+    const res = await kbDocApi.delete(id)
+    if (res.code === '200') {
+      message.success('删除成功')
+      await loadDocList()
+    }
+  } catch (error) {
+    console.error('删除失败:', error)
+    message.error('删除失败')
+  }
+}
 const uploadDocSubmitLoading = ref<boolean>(false)
 const uploadDocFormRules = {
   title: [{required: true, message: '请输入文档标题', trigger: 'blur'},
@@ -560,6 +580,7 @@ const handleUploadDocSubmit = async () => {
     const res = await kbDocApi.uploadDoc(formData)
     if (res.code === '200') {
       message.success('上传成功')
+      await loadDocList()
     }
   } catch (error: any) {
     message.error(error.message || '上传文档失败')

@@ -17,14 +17,19 @@ import com.github.cloudgyb.ai.knowledge.server.modules.rag.EmbeddingModelFactory
 import com.github.cloudgyb.ai.knowledge.server.modules.rag.EmbeddingStoreFactory;
 import dev.langchain4j.data.document.Document;
 import dev.langchain4j.data.document.DocumentSplitter;
+import dev.langchain4j.data.document.Metadata;
 import dev.langchain4j.data.document.loader.FileSystemDocumentLoader;
 import dev.langchain4j.data.document.splitter.DocumentSplitters;
 import dev.langchain4j.data.embedding.Embedding;
 import dev.langchain4j.data.segment.TextSegment;
 import dev.langchain4j.model.embedding.EmbeddingModel;
 import dev.langchain4j.model.output.Response;
+import dev.langchain4j.store.embedding.EmbeddingMatch;
+import dev.langchain4j.store.embedding.EmbeddingSearchRequest;
+import dev.langchain4j.store.embedding.EmbeddingSearchResult;
 import dev.langchain4j.store.embedding.EmbeddingStore;
 import dev.langchain4j.store.embedding.filter.MetadataFilterBuilder;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
@@ -267,6 +272,39 @@ public class KnowledgeBaseDocService extends ServiceImpl<KnowledgeBaseDocMapper,
         EmbeddingModel embeddingModel = embeddingModelFactory.create(aiModel);
         EmbeddingStore<TextSegment> embeddingStore = embeddingStoreFactory.create(embeddingModel.dimension());
         embeddingStore.removeAll(MetadataFilterBuilder.metadataKey("docId").isEqualTo(id));
+    }
+
+    public void testDoc(@NotNull Integer kbId, @NotBlank String text) {
+        KnowledgeBase knowledgeBase = knowledgeBaseService.getById(kbId);
+        if (knowledgeBase == null) {
+            throw new BusinessException("知识库不存在");
+        }
+        Integer aiVectorModelId = knowledgeBase.getAiVectorModelId();
+        AiModel aiModel = aiModelService.getById(aiVectorModelId);
+        if (aiModel == null) {
+            throw new BusinessException("知识库AI向量模型不存在！");
+        }
+        String modelType = aiModel.getModelType();
+        if (!AiModelType.VECTOR.name().equals(modelType)) {
+            throw new BusinessException("知识库AI向量模型类型不正确！");
+        }
+        EmbeddingModel embeddingModel = embeddingModelFactory.create(aiModel);
+        Response<Embedding> embedResponse = embeddingModel.embed(text);
+        Embedding embedding = embedResponse.content();
+        EmbeddingStore<TextSegment> embeddingStore = embeddingStoreFactory.create(embeddingModel.dimension());
+        EmbeddingSearchRequest docId1 = EmbeddingSearchRequest.builder()
+                .queryEmbedding(embedding)
+                .maxResults(5)
+                .minScore(0.65)
+                .filter(MetadataFilterBuilder.metadataKey("docId").isIn(1))
+                .build();
+        EmbeddingSearchResult<TextSegment> result = embeddingStore.search(docId1);
+        List<EmbeddingMatch<TextSegment>> matches = result.matches();
+        for (EmbeddingMatch<TextSegment> match : matches) {
+            String text1 = match.embedded().text();
+            Metadata metadata = match.embedded().metadata();
+            System.out.println(text1 + "  " + metadata.getString("docId"));
+        }
     }
 }
 
