@@ -306,6 +306,12 @@ public class KnowledgeBaseDocService extends ServiceImpl<KnowledgeBaseDocMapper,
             System.out.println(text1 + "  " + metadata.getString("docId"));
         }
     }
+
+    public List<Integer> listIdsByKbId(Integer id) {
+        return list(new LambdaQueryWrapper<KnowledgeBaseDoc>()
+                .select(KnowledgeBaseDoc::getId).eq(KnowledgeBaseDoc::getKbId, id))
+                .stream().map(KnowledgeBaseDoc::getId).toList();
+    }
 }
 
 

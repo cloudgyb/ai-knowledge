@@ -1,5 +1,6 @@
 package com.github.cloudgyb.ai.knowledge.server.modules.ai.controller;
 
+import com.github.cloudgyb.ai.knowledge.server.modules.ai.service.AiChatService;
 import jakarta.validation.constraints.NotNull;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -15,17 +16,17 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 @RestController
 @RequestMapping("/ai/chat")
 public class AiChatController {
+    private final AiChatService aiChatService;
+
+    public AiChatController(AiChatService aiChatService) {
+        this.aiChatService = aiChatService;
+    }
 
     @GetMapping(value = "/connect", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public SseEmitter connect(@NotNull @RequestParam("t") String t,
                               @NotNull @RequestParam("text") String text,
-                              @NotNull @RequestParam("kbId") Integer kbId) {
-        SseEmitter sseEmitter = new SseEmitter();
-        sseEmitter.onCompletion(() -> System.out.println("连接完成"));
-        sseEmitter.onTimeout(() -> System.out.println("连接超时"));
-        sseEmitter.onError(throwable -> System.out.println("连接错误"));
-        sseEmitter.complete();
-        return sseEmitter;
+                              @RequestParam(value = "kbId", required = false) Integer kbId) {
+        return aiChatService.chat(t, text, kbId);
     }
 
 

@@ -7,9 +7,9 @@
           <a-checkbox-group v-model:value="selectedKnowledgeBases" style="width: 100%">
             <a-space direction="vertical" style="width: 100%">
               <div
-                v-for="kb in knowledgeBaseList"
-                :key="kb.id"
-                class="kb-item"
+                  v-for="kb in knowledgeBaseList"
+                  :key="kb.id"
+                  class="kb-item"
               >
                 <a-checkbox :value="kb.id">
                   {{ kb.name }}
@@ -17,9 +17,9 @@
               </div>
             </a-space>
           </a-checkbox-group>
-          
-          <a-divider />
-          
+
+          <a-divider/>
+
           <a-button type="primary" block @click="handleSelectAll">
             全选
           </a-button>
@@ -35,41 +35,29 @@
           <!-- 聊天记录 -->
           <div ref="chatMessagesRef" class="chat-messages">
             <div
-              v-for="(message, index) in chatMessages"
-              :key="index"
-              :class="['message', message.role]"
+                v-for="(message, index) in chatMessages"
+                :key="index"
+                :class="['message', message.role]"
             >
               <div class="message-avatar">
                 <a-avatar v-if="message.role === 'user'" style="background-color: #1890ff">
-                  <UserOutlined />
+                  <UserOutlined/>
                 </a-avatar>
                 <a-avatar v-else style="background-color: #52c41a">
-                  <RobotOutlined />
+                  <RobotOutlined/>
                 </a-avatar>
-              </div>
-              <div class="message-content">
-                <div class="message-bubble">
-                  <template v-if="message.role === 'assistant' && message.isLoading">
-                    <a-spin :indicator="loadingIndicator" />
-                  </template>
-                  <template v-else>
-                    {{ message.content }}
-                  </template>
+                <div v-if="message.isLoading" class="message assistant streaming">
+                  <div class="message-content">
+                    <div class="message-bubble">
+                      <a-spin :indicator="loadingIndicator"/>
+                      <span style="margin-left: 8px">思考中...</span>
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
-            
-            <!-- 加载中提示 -->
-            <div v-if="isStreaming" class="message assistant streaming">
-              <div class="message-avatar">
-                <a-avatar style="background-color: #52c41a">
-                  <RobotOutlined />
-                </a-avatar>
-              </div>
               <div class="message-content">
                 <div class="message-bubble">
-                  <a-spin :indicator="loadingIndicator" />
-                  <span style="margin-left: 8px">思考中...</span>
+                    <AgentMarkdown :content="message.content"/>
                 </div>
               </div>
             </div>
@@ -78,20 +66,22 @@
           <!-- 输入区域 -->
           <div class="chat-input">
             <a-textarea
-              v-model:value="inputMessage"
-              placeholder="请输入您的问题..."
-              :auto-size="{ minRows: 3, maxRows: 6 }"
-              @pressEnter="handleSendMessage"
-              :disabled="isStreaming"
+                v-model:value="inputMessage"
+                placeholder="请输入您的问题..."
+                :auto-size="{ minRows: 3, maxRows: 6 }"
+                @pressEnter="handleSendMessage"
+                :disabled="isStreaming"
             />
             <div class="input-actions">
               <a-button
-                type="primary"
-                :loading="isStreaming"
-                @click="handleSendMessage"
-                style="width: 120px"
+                  type="primary"
+                  :loading="isStreaming"
+                  @click="handleSendMessage"
+                  style="width: 120px"
               >
-                <template #icon><SendOutlined /></template>
+                <template #icon>
+                  <SendOutlined/>
+                </template>
                 发送
               </a-button>
             </div>
@@ -103,15 +93,17 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted, nextTick } from 'vue'
-import { message } from 'ant-design-vue'
-import { UserOutlined, RobotOutlined, SendOutlined, LoadingOutlined } from '@ant-design/icons-vue'
-import { knowledgeBaseApi } from '@/api/knowledgeBase'
-import type { KnowledgeBase } from '@/api/knowledgeBase'
-import { h } from 'vue'
+import {ref, onMounted, nextTick} from 'vue'
+import {message} from 'ant-design-vue'
+import {UserOutlined, RobotOutlined, SendOutlined, LoadingOutlined} from '@ant-design/icons-vue'
+import {knowledgeBaseApi} from '@/api/knowledgeBase'
+import type {KnowledgeBase} from '@/api/knowledgeBase'
+import {h} from 'vue'
+import {AgentMarkdown} from 'agent-markdown-vue';
+import 'x-markdown-vue/style'
 
 // 加载图标
-const loadingIndicator = () => h(LoadingOutlined, { spin: true })
+const loadingIndicator = () => h(LoadingOutlined, {spin: true})
 
 // 知识库列表
 const knowledgeBaseList = ref<KnowledgeBase[]>([])
@@ -138,7 +130,7 @@ const loadKnowledgeBases = async () => {
       pageNum: 1,
       pageSize: 100
     })
-    if (res.code === 200) {
+    if (res.code === '200') {
       knowledgeBaseList.value = res.data.records || []
     }
   } catch (error) {
@@ -197,26 +189,27 @@ const handleSendMessage = async () => {
 
   // 开始流式请求
   isStreaming.value = true
-  
+
   try {
     // 使用 EventSource 进行 SSE 流式请求
     const params = new URLSearchParams({
-      message: userMessage,
-      knowledgeBaseIds: selectedKnowledgeBases.value.join(',')
+      t: new Date().getTime().toString(),
+      text: userMessage,
+      kbId: selectedKnowledgeBases.value.join(',')
     })
 
-    const eventSource = new EventSource(`/api/kb/chat?${params.toString()}`)
-    
+    const eventSource = new EventSource(`/api/ai/chat/connect?${params.toString()}`)
+
     let accumulatedContent = ''
 
     eventSource.onmessage = (event) => {
       const data = event.data
-      
+
       // 检查是否是结束标记
       if (data === '[DONE]') {
         eventSource.close()
         isStreaming.value = false
-        
+
         // 移除加载状态
         if (chatMessages.value[assistantMessageIndex]) {
           chatMessages.value[assistantMessageIndex].isLoading = false
@@ -224,34 +217,34 @@ const handleSendMessage = async () => {
         return
       }
 
+      console.log( data)
+
       // 累加内容
       accumulatedContent += data
-      chatMessages.value[assistantMessageIndex].content = accumulatedContent
-      
+      chatMessages.value[assistantMessageIndex].content += data
+
       scrollToBottom()
     }
 
-    eventSource.onerror = () => {
+    eventSource.onerror = (e: Event) => {
+      console.log(e)
       eventSource.close()
       isStreaming.value = false
-      
+
       // 如果内容为空，显示错误提示
       if (!accumulatedContent) {
-        chatMessages.value[assistantMessageIndex].content = '抱歉，获取回复失败，请稍后再试。'
+        chatMessages.value[assistantMessageIndex].content += '抱歉，获取回复失败，请稍后再试。\n'
       }
-      
       if (chatMessages.value[assistantMessageIndex]) {
         chatMessages.value[assistantMessageIndex].isLoading = false
       }
-      
-      message.error('连接中断')
       scrollToBottom()
     }
   } catch (error) {
     console.error('发送消息失败:', error)
     message.error('发送消息失败，请稍后再试')
     isStreaming.value = false
-    
+    chatMessages.value[assistantMessageIndex].isLoading = false
     // 移除占位消息
     chatMessages.value.pop()
   }
