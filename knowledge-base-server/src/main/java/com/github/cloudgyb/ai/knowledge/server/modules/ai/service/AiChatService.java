@@ -99,8 +99,19 @@ public class AiChatService {
         Assistant assistant = AiServices.builder(Assistant.class)
                 .streamingChatModel(streamingChatModel)
                 .contentRetriever(embeddingStoreContentRetriever)
+                .systemMessage("你是一个知识库问答助手，请根据知识库内容回答问题。" +
+                        "请使用中文回答，并尽量详细")
                 .build();
         TokenStream stream = assistant.chat(text);
+        stream.onPartialThinking(partialThinking -> {
+            String thinking = partialThinking.text();
+            log.info("partial thinking: {}", partialThinking);
+            try {
+                sseEmitter.send(SseEmitter.event().name("thinking").data(thinking).build());
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
         stream.onPartialResponse(content -> {
             log.info("partial response: {}", content);
             try {
