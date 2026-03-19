@@ -4,28 +4,34 @@
     <a-layout-header class="header">
       <div class="header-content">
         <div class="logo">
-          <h1 class="system-title">AI 知识库管理系统</h1>
+          <h1 class="system-title">基于 AI RAG 的在线知识库</h1>
         </div>
         <div class="user-menu">
           <a-dropdown>
             <span class="user-info">
               <a-avatar size="small">{{ userStore.userInfo?.username?.[0]?.toUpperCase() }}</a-avatar>
               <span class="username">{{ userStore.userInfo?.nickname || userStore.userInfo?.username }}</span>
-              <DownOutlined />
+              <DownOutlined/>
             </span>
             <template #overlay>
               <a-menu>
                 <a-menu-item key="my-knowledge">
-                  <template #icon><UserOutlined /></template>
+                  <template #icon>
+                    <UserOutlined/>
+                  </template>
                   我的知识库
                 </a-menu-item>
                 <a-menu-item key="account-settings">
-                  <template #icon><SettingOutlined /></template>
+                  <template #icon>
+                    <SettingOutlined/>
+                  </template>
                   账户设置
                 </a-menu-item>
-                <a-menu-divider />
+                <a-menu-divider/>
                 <a-menu-item key="logout" @click="handleLogout">
-                  <template #icon><LogoutOutlined /></template>
+                  <template #icon>
+                    <LogoutOutlined/>
+                  </template>
                   退出
                 </a-menu-item>
               </a-menu>
@@ -39,25 +45,25 @@
       <!-- 左侧边栏 -->
       <a-layout-sider v-model:selectedKeys="selectedKeys" theme="light" width="200" style="background: #fff">
         <a-menu
-          v-model:selectedKeys="selectedKeys"
-          mode="inline"
-          :items="menuItems"
-          @select="handleMenuSelect"
+            v-model:selectedKeys="selectedKeys"
+            mode="inline"
+            :items="menuItems"
+            @select="handleMenuSelect"
         />
       </a-layout-sider>
 
       <!-- 主体内容 -->
       <a-layout-content class="content">
-        <router-view />
+        <router-view/>
       </a-layout-content>
     </a-layout>
   </a-layout>
 </template>
 
 <script setup lang="ts">
-import { ref, h } from 'vue'
-import { useRouter } from 'vue-router'
-import { useUserStore } from '@/stores/user'
+import {ref, h, onMounted} from 'vue'
+import {useRouter, useRoute} from 'vue-router'
+import {useUserStore} from '@/stores/user'
 import {
   ApiOutlined,
   FolderOutlined,
@@ -70,6 +76,7 @@ import {
 
 const router = useRouter()
 const userStore = useUserStore()
+const route = useRoute()
 
 // 模拟用户信息（实际项目中应该从登录接口获取）
 if (!userStore.userInfo) {
@@ -100,7 +107,7 @@ const menuItems = ref([
   }
 ])
 
-const handleMenuSelect = ({ key }: { key: string }) => {
+const handleMenuSelect = ({key}: { key: string }) => {
   router.push(`/${key}`)
 }
 
@@ -109,6 +116,13 @@ const handleLogout = () => {
   console.log('退出登录')
   // 实际项目中可以在这里调用登出接口或跳转到登录页
 }
+
+onMounted(() => {
+  //处理页面刷新后的菜单选中
+  let path = route.path
+  let key = menuItems.value.find(item => path.startsWith("/" + item.key))?.key
+  selectedKeys.value = [key || menuItems.value[0].key]
+})
 </script>
 
 <style scoped>
