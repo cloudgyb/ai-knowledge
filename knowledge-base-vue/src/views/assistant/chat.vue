@@ -1,32 +1,30 @@
 <template>
   <div class="assistant-page">
-    <a-row class="chat-container" :gutter="2">
+    <a-row class="chat-container" :gutter="16">
       <!-- 左侧知识库选择 -->
       <a-col :span="6" class="sidebar">
-        <a-card style="height: 100%">
-          <template #title>
-            <div
-                style="display: flex;flex-direction:column;justify-content: space-between;height: 60px;align-items: center;">
-              <div>AI 聊天小助理</div>
-              <a-button block type="primary" ghost @click="handleNewChat">
-                开启新对话
-              </a-button>
-            </div>
-          </template>
-          <div class="conversation-box" style="max-height: 430px;overflow-y: scroll">
-            <a-space direction="vertical">
+        <a-card title="选择知识库" :bordered="false" class="knowledge-card">
+          <a-checkbox-group v-model:value="selectedKnowledgeBases" style="width: 100%">
+            <a-space direction="vertical" style="width: 100%">
               <div
-                  v-for="c in conversationList"
-                  :key="c.id"
+                  v-for="kb in knowledgeBaseList"
+                  :key="kb.id"
                   class="kb-item"
               >
-                {{ c.title }}
+                <a-checkbox :value="kb.id">
+                  {{ kb.name }}
+                </a-checkbox>
               </div>
             </a-space>
-          </div>
-          <a-button @click="handleClearAll"
-                    style="position: absolute;bottom: 10px;left: 20px;right: 20px">
-            清空会话
+          </a-checkbox-group>
+
+          <a-divider/>
+
+          <a-button type="primary" block @click="handleSelectAll">
+            全选
+          </a-button>
+          <a-button block style="margin-top: 8px" @click="handleClearAll">
+            清空
           </a-button>
         </a-card>
       </a-col>
@@ -59,7 +57,7 @@
               </div>
               <div class="message-content">
                 <div class="message-bubble">
-                  <AgentMarkdown :content="message.content"/>
+                    <AgentMarkdown :content="message.content"/>
                 </div>
               </div>
             </div>
@@ -103,9 +101,7 @@ import type {KnowledgeBase} from '@/api/knowledgeBase'
 import {h} from 'vue'
 import {AgentMarkdown} from 'agent-markdown-vue';
 import 'x-markdown-vue/style'
-import type {Conversation} from "@/api/model/chatTypes";
 
-const conversationList = ref<Conversation[]>([])
 // 加载图标
 const loadingIndicator = () => h(LoadingOutlined, {spin: true})
 
@@ -221,7 +217,7 @@ const handleSendMessage = async () => {
         return
       }
 
-      console.log(data)
+      console.log( data)
 
       // 累加内容
       accumulatedContent += data
@@ -256,79 +252,6 @@ const handleSendMessage = async () => {
 
 onMounted(() => {
   loadKnowledgeBases()
-  conversationList.value.push(
-      {
-        id: '1',
-        title: '测试会话',
-        last_active: '2023-08-01 12:00:00'
-      }
-      , {
-        id: '2',
-        title: '测试会话2',
-        last_active: '2023-08-01 12:00:00'
-      },
-      {
-        id: '3',
-        title: '测试会话3',
-        last_active: '2023-08-01 12:00:00'
-      },
-      {
-        id: '4',
-        title: '测试会话4',
-        last_active: '2023-08-01 12:00:00'
-      },
-      {
-        id: '5',
-        title: '测试会话5',
-        last_active: '2023-08-01 12:00:00'
-      },
-      {
-        id: '6',
-        title: '测试会话6',
-        last_active: '2023-08-01 12:00:00'
-      },
-      {
-        id: '7',
-        title: '测试会话7',
-        last_active: '2023-08-01 12:00:00'
-      },
-      {
-        id: '8',
-        title: '测试会话8',
-        last_active: '2023-08-01 12:00:00'
-      },
-      {
-        id: '7',
-        title: '测试会话7',
-        last_active: '2023-08-01 12:00:00'
-      },
-      {
-        id: '8',
-        title: '测试会话8',
-        last_active: '2023-08-01 12:00:00'
-      },
-      {
-        id: '7',
-        title: '测试会话7',
-        last_active: '2023-08-01 12:00:00'
-      },
-      {
-        id: '8',
-        title: '测试会话8',
-        last_active: '2023-08-01 12:00:00'
-      },
-      {
-        id: '7',
-        title: '测试会话7',
-        last_active: '2023-08-01 12:00:00'
-      },
-      {
-        id: '8',
-        title: '测试会话8',
-        last_active: '2023-08-01 12:00:00'
-      }
-  )
-
 })
 </script>
 
@@ -460,23 +383,5 @@ onMounted(() => {
 
 .chat-messages::-webkit-scrollbar-track {
   background: transparent;
-}
-
-
-.conversation-box::-webkit-scrollbar {
-  width: 6px; /* 垂直滚动条宽度 */
-  height: 10px; /* 水平滚动条高度 */
-  background-color: transparent; /* 关键：避免轨道溢出背景 */
-}
-.conversation-box:hover::-webkit-scrollbar{
-  background-color: #f5f5f5;
-}
-.conversation-box::-webkit-scrollbar-thumb {
-  border-radius: 8px;
-  background-color: transparent;
-}
-
-.conversation-box:hover::-webkit-scrollbar-thumb {
-  background-color: #ccc;
 }
 </style>
