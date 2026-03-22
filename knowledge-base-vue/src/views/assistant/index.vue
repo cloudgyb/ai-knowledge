@@ -2,260 +2,54 @@
   <div class="assistant-page">
     <a-row class="chat-container" :gutter="2">
       <!-- 左侧知识库选择 -->
-      <a-col :span="6" class="sidebar">
+      <a-col :span="6" class="sidebar" style="height: 100%">
         <a-card style="height: 100%">
           <template #title>
-            <div
-                style="display: flex;flex-direction:column;justify-content: space-between;height: 60px;align-items: center;">
+            <a-flex vertical align="center" justify="center" gap="small">
               <div>AI 聊天小助理</div>
               <a-button block type="primary" ghost @click="handleNewChat">
                 开启新对话
               </a-button>
-            </div>
+            </a-flex>
           </template>
-          <div class="conversation-box" style="max-height: 430px;overflow-y: scroll">
+          <div class="conversation-box">
             <a-space direction="vertical">
-              <div
-                  v-for="c in conversationList"
-                  :key="c.id"
-                  class="kb-item"
-              >
+              <div v-for="c in conversationList" :key="c.id" class="kb-item">
                 {{ c.title }}
               </div>
             </a-space>
           </div>
-          <a-button @click="handleClearAll"
-                    style="position: absolute;bottom: 10px;left: 20px;right: 20px">
+          <a-button @click="handleClearAllChat" style="position: absolute;bottom: 10px;left: 20px;right: 20px">
             清空会话
           </a-button>
         </a-card>
       </a-col>
-
       <!-- 右侧聊天区域 -->
-      <a-col :span="18" class="chat-area">
-        <a-card :bordered="false" class="chat-card">
-          <!-- 聊天记录 -->
-          <div ref="chatMessagesRef" class="chat-messages">
-            <div
-                v-for="(message, index) in chatMessages"
-                :key="index"
-                :class="['message', message.role]"
-            >
-              <div class="message-avatar">
-                <a-avatar v-if="message.role === 'user'" style="background-color: #1890ff">
-                  <UserOutlined/>
-                </a-avatar>
-                <a-avatar v-else style="background-color: #52c41a">
-                  <RobotOutlined/>
-                </a-avatar>
-                <div v-if="message.isLoading" class="message assistant streaming">
-                  <div class="message-content">
-                    <div class="message-bubble">
-                      <a-spin :indicator="loadingIndicator"/>
-                      <span style="margin-left: 8px">思考中...</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div class="message-content">
-                <div class="message-bubble">
-                  <AgentMarkdown :content="message.content"/>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- 输入区域 -->
-          <div class="chat-input">
-            <a-textarea
-                v-model:value="inputMessage"
-                placeholder="请输入您的问题..."
-                :auto-size="{ minRows: 3, maxRows: 6 }"
-                @pressEnter="handleSendMessage"
-                :disabled="isStreaming"
-            />
-            <div class="input-actions">
-              <a-button
-                  type="primary"
-                  :loading="isStreaming"
-                  @click="handleSendMessage"
-                  style="width: 120px"
-              >
-                <template #icon>
-                  <SendOutlined/>
-                </template>
-                发送
-              </a-button>
-            </div>
-          </div>
-        </a-card>
+      <a-col :span="18" style="width:100%; height: 100%">
+          <router-view/>
       </a-col>
     </a-row>
   </div>
 </template>
 
 <script setup lang="ts">
-import {ref, onMounted, nextTick} from 'vue'
+import {onMounted, ref, provide} from 'vue'
 import {message} from 'ant-design-vue'
-import {UserOutlined, RobotOutlined, SendOutlined, LoadingOutlined} from '@ant-design/icons-vue'
-import {knowledgeBaseApi} from '@/api/knowledgeBase'
-import type {KnowledgeBase} from '@/api/knowledgeBase'
-import {h} from 'vue'
-import {AgentMarkdown} from 'agent-markdown-vue';
-import 'x-markdown-vue/style'
 import type {Conversation} from "@/api/model/chatTypes";
+import {useRouter} from "vue-router";
 
+const router = useRouter()
 const conversationList = ref<Conversation[]>([])
-// 加载图标
-const loadingIndicator = () => h(LoadingOutlined, {spin: true})
 
-// 知识库列表
-const knowledgeBaseList = ref<KnowledgeBase[]>([])
-const selectedKnowledgeBases = ref<number[]>([])
-
-// 聊天消息
-interface ChatMessage {
-  role: 'user' | 'assistant'
-  content: string
-  isLoading?: boolean
+const handleNewChat = () => {
+  router.push('/assistant')
 }
 
-const chatMessages = ref<ChatMessage[]>([])
-const inputMessage = ref('')
-const isStreaming = ref(false)
-
-// 聊天记录滚动容器
-const chatMessagesRef = ref<HTMLElement>()
-
-// 加载知识库列表
-const loadKnowledgeBases = async () => {
-  try {
-    const res = await knowledgeBaseApi.getList({
-      pageNum: 1,
-      pageSize: 100
-    })
-    if (res.code === '200') {
-      knowledgeBaseList.value = res.data.records || []
-    }
-  } catch (error) {
-    console.error('加载知识库列表失败:', error)
-  }
-}
-
-// 全选
-const handleSelectAll = () => {
-  selectedKnowledgeBases.value = knowledgeBaseList.value.map(kb => kb.id)
-}
-
-// 清空
-const handleClearAll = () => {
-  selectedKnowledgeBases.value = []
-}
-
-// 滚动到底部
-const scrollToBottom = async () => {
-  await nextTick()
-  if (chatMessagesRef.value) {
-    chatMessagesRef.value.scrollTop = chatMessagesRef.value.scrollHeight
-  }
-}
-
-// 发送消息
-const handleSendMessage = async () => {
-  if (!inputMessage.value.trim()) {
-    message.warning('请输入消息内容')
-    return
-  }
-
-  if (isStreaming.value) {
-    message.warning('请等待当前回复完成')
-    return
-  }
-
-  // 添加用户消息
-  chatMessages.value.push({
-    role: 'user',
-    content: inputMessage.value.trim()
-  })
-
-  const userMessage = inputMessage.value.trim()
-  inputMessage.value = ''
-  await scrollToBottom()
-
-  // 添加 AI 助手占位消息
-  const assistantMessageIndex = chatMessages.value.length
-  chatMessages.value.push({
-    role: 'assistant',
-    content: '',
-    isLoading: true
-  })
-  await scrollToBottom()
-
-  // 开始流式请求
-  isStreaming.value = true
-
-  try {
-    // 使用 EventSource 进行 SSE 流式请求
-    const params = new URLSearchParams({
-      t: new Date().getTime().toString(),
-      text: userMessage,
-      kbId: selectedKnowledgeBases.value.join(',')
-    })
-
-    const eventSource = new EventSource(`/api/ai/chat/connect?${params.toString()}`)
-
-    let accumulatedContent = ''
-
-    eventSource.onmessage = (event) => {
-      const data = event.data
-
-      // 检查是否是结束标记
-      if (data === '[DONE]') {
-        eventSource.close()
-        isStreaming.value = false
-
-        // 移除加载状态
-        if (chatMessages.value[assistantMessageIndex]) {
-          chatMessages.value[assistantMessageIndex].isLoading = false
-        }
-        return
-      }
-
-      console.log(data)
-
-      // 累加内容
-      accumulatedContent += data
-      chatMessages.value[assistantMessageIndex].content += data
-
-      scrollToBottom()
-    }
-
-    eventSource.onerror = (e: Event) => {
-      console.log(e)
-      eventSource.close()
-      isStreaming.value = false
-
-      // 如果内容为空，显示错误提示
-      if (!accumulatedContent) {
-        chatMessages.value[assistantMessageIndex].content += '抱歉，获取回复失败，请稍后再试。\n'
-      }
-      if (chatMessages.value[assistantMessageIndex]) {
-        chatMessages.value[assistantMessageIndex].isLoading = false
-      }
-      scrollToBottom()
-    }
-  } catch (error) {
-    console.error('发送消息失败:', error)
-    message.error('发送消息失败，请稍后再试')
-    isStreaming.value = false
-    chatMessages.value[assistantMessageIndex].isLoading = false
-    // 移除占位消息
-    chatMessages.value.pop()
-  }
+const handleClearAllChat = () => {
+  message.success('已清空所有会话')
 }
 
 onMounted(() => {
-  loadKnowledgeBases()
   conversationList.value.push(
       {
         id: '1',
@@ -328,11 +122,12 @@ onMounted(() => {
         last_active: '2023-08-01 12:00:00'
       }
   )
-
 })
+provide('conversationList', conversationList)
 </script>
 
 <style scoped>
+
 .assistant-page {
   padding: 0;
   height: calc(100vh - 128px);
@@ -360,117 +155,21 @@ onMounted(() => {
   border-bottom: none;
 }
 
-.chat-area {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-}
-
-.chat-card {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-}
-
-.chat-messages {
-  flex: 1;
+.conversation-box {
+  max-height: calc(100vh - 300px);
   overflow-y: auto;
-  padding: 16px;
-  background: #f5f5f5;
-  border-radius: 4px;
-  margin-bottom: 16px;
 }
-
-.message {
-  display: flex;
-  margin-bottom: 16px;
-}
-
-.message.user {
-  justify-content: flex-end;
-}
-
-.message.assistant {
-  justify-content: flex-start;
-}
-
-.message-avatar {
-  flex-shrink: 0;
-  margin: 0 8px;
-}
-
-.message.user .message-avatar {
-  order: 2;
-}
-
-.message.assistant .message-avatar {
-  order: 1;
-}
-
-.message-content {
-  max-width: 70%;
-  order: 1;
-}
-
-.message.user .message-content {
-  order: 1;
-}
-
-.message.assistant .message-content {
-  order: 2;
-}
-
-.message-bubble {
-  padding: 12px 16px;
-  border-radius: 8px;
-  word-wrap: break-word;
-  white-space: pre-wrap;
-}
-
-.message.user .message-bubble {
-  background: #1890ff;
-  color: #fff;
-}
-
-.message.assistant .message-bubble {
-  background: #fff;
-  color: rgba(0, 0, 0, 0.85);
-}
-
-.chat-input {
-  border-top: 1px solid #f0f0f0;
-  padding-top: 16px;
-}
-
-.input-actions {
-  display: flex;
-  justify-content: flex-end;
-  margin-top: 8px;
-}
-
-/* 滚动条样式 */
-.chat-messages::-webkit-scrollbar {
-  width: 6px;
-}
-
-.chat-messages::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.2);
-  border-radius: 3px;
-}
-
-.chat-messages::-webkit-scrollbar-track {
-  background: transparent;
-}
-
 
 .conversation-box::-webkit-scrollbar {
   width: 6px; /* 垂直滚动条宽度 */
   height: 10px; /* 水平滚动条高度 */
   background-color: transparent; /* 关键：避免轨道溢出背景 */
 }
-.conversation-box:hover::-webkit-scrollbar{
+
+.conversation-box:hover::-webkit-scrollbar {
   background-color: #f5f5f5;
 }
+
 .conversation-box::-webkit-scrollbar-thumb {
   border-radius: 8px;
   background-color: transparent;
