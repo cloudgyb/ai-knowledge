@@ -11,7 +11,6 @@
           placeholder="请输入您的问题..."
           :auto-size="{ minRows: 3, maxRows: 6 }"
           @pressEnter="handleSendMessage"
-          :disabled="isStreaming"
           style="width: 700px;border-radius: 20px;"
       />
       <a-flex align="space-between" justify="space-between" style="width: 700px">
@@ -27,7 +26,10 @@
             <FolderTwoTone/>
           </template>
         </a-select>
-        <a-button type="primary" :loading="isStreaming" @click="handleSendMessage" style="width: 120px">
+        <a-button type="primary" :disabled="sendBtnDisabled"
+                  :loading="isStreaming"
+                  @click="handleSendMessage" style="width: 120px;color: #fff"
+                  :style="{background: sendBtnDisabled ? '#6da3ef' : ''}">
           <template #icon>
             <SendOutlined/>
           </template>
@@ -39,7 +41,7 @@
 </template>
 <script setup lang="ts">
 
-import {onMounted, ref, inject, type Ref} from "vue";
+import {onMounted, ref, inject, type Ref, computed} from "vue";
 import {FolderTwoTone, MessageTwoTone, SendOutlined} from "@ant-design/icons-vue";
 import {type KnowledgeBase, knowledgeBaseApi} from "@/api/knowledgeBase";
 import {message, type SelectProps} from "ant-design-vue";
@@ -61,6 +63,9 @@ const kbSelectOptions = ref<SelectProps["options"]>([])
 
 
 const isStreaming = ref(false)
+const sendBtnDisabled = computed(() => {
+  return !conversationAddForm.value.text.trim()
+})
 
 // 加载知识库列表
 const loadKnowledgeBases = async () => {
