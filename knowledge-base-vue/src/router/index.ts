@@ -26,7 +26,13 @@ const routes: RouteRecordRaw[] = [
                 component: () => import('@/views/assistant/index.vue'),
                 children: [
                     {
-                        path: '/assistant/chat',
+                        path: '',
+                        name: 'NewChat',
+                        component: () => import('@/views/assistant/NewChat.vue'),
+                        meta: {title: '新建对话'}
+                    },
+                    {
+                        path: '/assistant/chat/:cid',
                         name: 'AssistantChat',
                         component: () => import('@/views/assistant/chat.vue'),
                         meta: {title: 'AI 小助理'}
