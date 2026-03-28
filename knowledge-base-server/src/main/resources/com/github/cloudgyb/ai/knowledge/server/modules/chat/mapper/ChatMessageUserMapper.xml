@@ -5,17 +5,19 @@
 <mapper namespace="com.github.cloudgyb.ai.knowledge.server.modules.chat.mapper.ChatMessageUserMapper">
 
     <resultMap id="BaseResultMap" type="com.github.cloudgyb.ai.knowledge.server.modules.chat.domain.ChatMessageUser">
-            <id property="id" column="id" />
-            <result property="cid" column="cid" />
-            <result property="sender" column="sender" />
-            <result property="content" column="content" />
-            <result property="contentType" column="content_type" />
-            <result property="sendAt" column="send_at" />
-            <result property="metadata" column="metadata" />
+        <id property="id" column="id"/>
+        <result property="cid" column="cid"/>
+        <result property="sender" column="sender"/>
+        <result property="content" column="content"/>
+        <result property="contentType" column="content_type"/>
+        <result property="sendAt" column="send_at"/>
+        <result property="metadata" column="metadata"
+                typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler"/>
     </resultMap>
 
     <sql id="Base_Column_List">
-        id,cid,sender,content,content_type,send_at,
+        id
+        ,cid,sender,content,content_type,send_at,
         metadata
     </sql>
 </mapper>

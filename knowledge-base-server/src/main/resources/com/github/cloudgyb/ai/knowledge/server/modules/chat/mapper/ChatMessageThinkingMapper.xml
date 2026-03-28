@@ -13,7 +13,8 @@
         <result property="content" column="content"/>
         <result property="contentType" column="content_type"/>
         <result property="sendAt" column="send_at"/>
-        <result property="metadata" column="metadata"/>
+        <result property="metadata" column="metadata"
+                typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler"/>
     </resultMap>
 
     <sql id="Base_Column_List">
