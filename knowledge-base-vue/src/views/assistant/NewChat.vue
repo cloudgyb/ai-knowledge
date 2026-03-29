@@ -47,6 +47,7 @@ import {type KnowledgeBase, knowledgeBaseApi} from "@/api/knowledgeBase";
 import {message, type SelectProps} from "ant-design-vue";
 import {useRouter} from "vue-router";
 import type {Conversation} from "@/api/model/chatTypes";
+import {currentDateTime} from "@/utils/time";
 
 const router = useRouter()
 // 获取父路由提供的 conversationList
@@ -114,7 +115,10 @@ const handleSendMessage = async () => {
     conversationList.value.push({
       id: params.get('cid') || '',
       title: `测试会话` + params.get('cid'),
-      last_active: new Date().toISOString()
+      last_active: currentDateTime()
+    })
+    conversationList.value.sort((a, b) => {
+      return new Date(b.last_active).getTime() - new Date(a.last_active).getTime()
     })
     // todo 调用后端接口创建新的对话
     // todo 进入聊天路由页面

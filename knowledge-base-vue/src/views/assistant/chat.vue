@@ -57,7 +57,7 @@
               </div>
               <div class="message-content">
                 <div class="message-bubble">
-                    <AgentMarkdown :content="message.content"/>
+                  <AgentMarkdown :content="message.content"/>
                 </div>
               </div>
             </div>
@@ -93,7 +93,7 @@
 </template>
 
 <script setup lang="ts">
-import {ref, onMounted, nextTick} from 'vue'
+import {ref, onMounted, nextTick, watch} from 'vue'
 import {message} from 'ant-design-vue'
 import {UserOutlined, RobotOutlined, SendOutlined, LoadingOutlined} from '@ant-design/icons-vue'
 import {knowledgeBaseApi} from '@/api/knowledgeBase'
@@ -101,7 +101,14 @@ import type {KnowledgeBase} from '@/api/knowledgeBase'
 import {h} from 'vue'
 import {AgentMarkdown} from 'agent-markdown-vue';
 import 'x-markdown-vue/style'
+import {useRoute} from "vue-router";
 
+const route = useRoute()
+// 监听路由切换
+watch(() => route.params.cid, (cid, preCid) => {
+  console.log("当前对话id：" + cid)
+  console.log("上一个对话id：" + preCid)
+})
 // 加载图标
 const loadingIndicator = () => h(LoadingOutlined, {spin: true})
 
@@ -217,7 +224,7 @@ const handleSendMessage = async () => {
         return
       }
 
-      console.log( data)
+      console.log(data)
 
       // 累加内容
       accumulatedContent += data
@@ -251,6 +258,7 @@ const handleSendMessage = async () => {
 }
 
 onMounted(() => {
+  console.log("chat onMounted")
   loadKnowledgeBases()
 })
 </script>
