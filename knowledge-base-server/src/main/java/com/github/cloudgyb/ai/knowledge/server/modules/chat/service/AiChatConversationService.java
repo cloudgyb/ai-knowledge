@@ -1,7 +1,6 @@
 package com.github.cloudgyb.ai.knowledge.server.modules.chat.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.github.cloudgyb.ai.knowledge.server.modules.chat.ConversationStatus;
 import com.github.cloudgyb.ai.knowledge.server.modules.chat.domain.ChatConversation;
@@ -32,6 +31,7 @@ public class AiChatConversationService {
         ChatConversation chatConversation = new ChatConversation();
         chatConversation.setUserId(1L);
         chatConversation.setTitle(title);
+        chatConversation.setLastActiveTime(new Date());
         chatConversation.setCurrentStatus(ConversationStatus.NEW);
         if (!chatConversationService.save(chatConversation)) {
             throw new BusinessException("创建对话失败！");
@@ -70,6 +70,8 @@ public class AiChatConversationService {
         LambdaQueryWrapper<ChatConversation> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(ChatConversation::getUserId, 1L);
         queryWrapper.orderByDesc(ChatConversation::getLastActiveTime);
+        queryWrapper.orderByDesc(ChatConversation::getUpdateTime);
+        queryWrapper.orderByDesc(ChatConversation::getCreateTime);
         return chatConversationService.page(Page.of(pageNum, pageSize), queryWrapper);
     }
 

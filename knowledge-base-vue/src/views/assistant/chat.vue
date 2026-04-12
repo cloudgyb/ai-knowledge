@@ -93,7 +93,7 @@
 </template>
 
 <script setup lang="ts">
-import {ref, onMounted, nextTick, watch} from 'vue'
+import {ref, onMounted, nextTick, watch, inject, type Ref} from 'vue'
 import {message} from 'ant-design-vue'
 import {UserOutlined, RobotOutlined, SendOutlined, LoadingOutlined} from '@ant-design/icons-vue'
 import {knowledgeBaseApi} from '@/api/knowledgeBase'
@@ -104,6 +104,7 @@ import 'x-markdown-vue/style'
 import {useRoute} from "vue-router";
 
 const route = useRoute()
+const selectedKeys = inject('selectedKeys') as Ref<string[]>
 // 监听路由切换
 watch(() => route.params.cid, (cid, preCid) => {
   console.log("当前对话id：" + cid)
@@ -259,6 +260,11 @@ const handleSendMessage = async () => {
 
 onMounted(() => {
   console.log("chat onMounted")
+  let path = route.path;
+  console.log("当前路径：" + path)
+  if (path.startsWith('/assistant/chat/')) {
+    selectedKeys.value = [route.params.cid + '']
+  }
   loadKnowledgeBases()
 })
 </script>

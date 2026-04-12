@@ -14,7 +14,7 @@
           </template>
           <div class="conversation-box">
             <a-menu v-model:selectedKeys="selectedKeys" style="width: 256px" mode="vertical" @click="handleClick">
-              <a-menu-item v-for="c in conversationList" :key="c.id" :title="c.title+'-'+c.last_active">
+              <a-menu-item v-for="c in conversationList" :key="c.id" :title="c.title+'-'+c.lastActiveTime">
                 {{ c.title }}
                 <a-dropdown @click.stop>
                   <a-button type="primary" ghost style="position: absolute;right: 5px;top: 5px">
@@ -25,7 +25,7 @@
                   <template #overlay>
                     <a-menu>
                       <a-menu-item key="0">
-                        <a-button type="text" size="small">
+                        <a-button type="text" size="small" @click="handleRenameConversation(c)">
                           <template #icon>
                             <edit-outlined/>
                           </template>
@@ -41,7 +41,7 @@
                         </a-button>
                       </a-menu-item>
                       <a-menu-item key="1">
-                        <a-button danger type="text" size="small">
+                        <a-button danger type="text" size="small" @click="handleDeleteConversation(c.id)">
                           <template #icon>
                             <delete-outlined/>
                           </template>
@@ -68,11 +68,12 @@
 </template>
 
 <script setup lang="ts">
-import {h, onMounted, provide, ref} from 'vue'
+import {onMounted, provide, ref} from 'vue'
 import {EllipsisOutlined, DeleteOutlined, EditOutlined, PushpinOutlined} from '@ant-design/icons-vue'
-import {message, type MenuItemProps, type MenuProps} from 'ant-design-vue'
+import {message, type MenuProps} from 'ant-design-vue'
 import type {Conversation} from "@/api/model/chatTypes";
 import {useRouter, useRoute} from "vue-router";
+import {chatApi} from "@/api/chat";
 
 const router = useRouter()
 const route = useRoute()
@@ -93,108 +94,55 @@ const handleClearAllChat = () => {
 }
 
 const selectedKeys = ref<any[]>([]);
-
+const loadConversations = async () => {
+  try {
+    const res = await chatApi.getConversations()
+    if (res.code === '200') {
+      conversationList.value = res.data.records
+      if (res.data.records.length > 0) {
+        selectedKeys.value = [res.data.records[0].id]
+      }
+    }
+  } catch (error) {
+    console.error('加载会话列表失败:', error)
+  }
+}
+const handleDeleteConversation = async (id: string) => {
+  try {
+    const res = await chatApi.deleteConversation(id)
+    if (res.code === '200') {
+      message.success('删除成功')
+      await loadConversations()
+    }
+  } catch (error) {
+    message.error('删除失败')
+  }
+}
+const handleRenameConversation = async (conversation: Conversation) => {
+  const newTitle = prompt('请输入新的标题', conversation.title)
+  if (newTitle) {
+    const res = await chatApi.updateConversation({id: conversation.id, title: newTitle})
+    if (res.code === '200') {
+      message.success('修改成功')
+      conversation.title = newTitle
+    }
+  }
+}
+const selectKeys = (key: string) => {
+  debugger
+  selectedKeys.value = [key]
+}
 onMounted(() => {
-  console.log('onMounted')
-  conversationList.value.push(
-      {
-        id: '8',
-        title: '测试会话8',
-        last_active: '2023-08-01 12:00:00'
-      },
-      {
-        id: '9',
-        title: '测试会话8',
-        last_active: '2023-08-01 12:00:00'
-      },
-      {
-        id: '10',
-        title: '测试会话8',
-        last_active: '2023-08-01 12:00:00'
-      },
-      {
-        id: '11',
-        title: '测试会话8',
-        last_active: '2023-08-01 12:00:00'
-      },
-      {
-        id: '12',
-        title: '测试会话fdsfs8',
-        last_active: '2023-08-01 12:00:00'
-      },
-      {
-        id: '13',
-        title: '测试会话fdsf8',
-        last_active: '2023-08-01 12:00:00'
-      },
-      {
-        id: '14',
-        title: '测试会话8',
-        last_active: '2023-08-01 12:00:00'
-      },
-      {
-        id: '15',
-        title: '测试会话8',
-        last_active: '2023-08-01 12:00:00'
-      }
-      ,
-      {
-        id: '16',
-        title: '测试会话8',
-        last_active: '2023-08-01 12:00:00'
-      },
-      {
-        id: '17',
-        title: '测试会话8',
-        last_active: '2023-08-01 12:00:00'
-      },
-      {
-        id: '18',
-        title: '测试会话8',
-        last_active: '2023-08-01 12:00:00'
-      },
-      {
-        id: '19',
-        title: '测试会话8',
-        last_active: '2023-08-01 12:00:00'
-      },
-      {
-        id: '20',
-        title: '测试会话8',
-        last_active: '2023-08-01 12:00:00'
-      },
-      {
-        id: '21',
-        title: '测试会话8',
-        last_active: '2023-08-01 12:00:00'
-      },
-      {
-        id: '22',
-        title: '测试会话8',
-        last_active: '2023-08-01 12:00:00'
-      },
-      {
-        id: '23',
-        title: '测试会话8',
-        last_active: '2023-08-01 12:00:00'
-      },
-      {
-        id: '24',
-        title: '测试会话8',
-        last_active: '2023-08-01 12:00:00'
-      },
-      {
-        id: '25',
-        title: '测试会话8',
-        last_active: '2023-08-01 12:00:00'
-      }
-  )
+  loadConversations()
   let path = route.path;
   if (path.startsWith('/assistant/chat/')) {
     selectedKeys.value = [route.params.cid]
   }
 })
 provide('conversationList', conversationList)
+provide('loadConversations', loadConversations)
+provide('selectedKeys', selectedKeys)
+provide('selectKeys', selectKeys)
 </script>
 
 <style scoped>

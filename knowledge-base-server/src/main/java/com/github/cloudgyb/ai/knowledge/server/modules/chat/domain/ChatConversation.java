@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.annotation.TableName;
 
 import java.util.Date;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.github.cloudgyb.ai.knowledge.server.modules.chat.ConversationStatus;
 import lombok.Data;
 
@@ -20,6 +21,7 @@ import lombok.Data;
 @Data
 public class ChatConversation {
     @TableId
+    @JsonFormat(shape = JsonFormat.Shape.STRING)
     private Long id;
 
     private Long userId;

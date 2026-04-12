@@ -41,18 +41,16 @@
 </template>
 <script setup lang="ts">
 
-import {onMounted, ref, inject, type Ref, computed} from "vue";
+import {onMounted, ref, inject, computed} from "vue";
 import {FolderTwoTone, MessageTwoTone, SendOutlined} from "@ant-design/icons-vue";
 import {type KnowledgeBase, knowledgeBaseApi} from "@/api/knowledgeBase";
 import {message, type SelectProps} from "ant-design-vue";
 import {useRouter} from "vue-router";
-import type {Conversation} from "@/api/model/chatTypes";
-import {currentDateTime} from "@/utils/time";
+import {chatApi} from "@/api/chat";
 
 const router = useRouter()
 // 获取父路由提供的 conversationList
-const conversationList = inject('conversationList') as Ref<Conversation[]> || ref([])
-
+const loadConversations = inject('loadConversations') as () => void
 const conversationAddForm = ref({
   text: '',
   kbId: undefined
@@ -112,17 +110,21 @@ const handleSendMessage = async () => {
       text: conversationAddForm.value.text,
       kbId: conversationAddForm.value.kbId || '',
     })
-    conversationList.value.push({
-      id: params.get('cid') || '',
-      title: `测试会话` + params.get('cid'),
-      last_active: currentDateTime()
+    let title = conversationAddForm.value.text.trim()
+    title = title.length > 20 ? '' : title
+    // 调用后端接口创建新的对话
+    const res = await chatApi.addConversation({
+      title: title
     })
-    conversationList.value.sort((a, b) => {
-      return new Date(b.last_active).getTime() - new Date(a.last_active).getTime()
-    })
-    // todo 调用后端接口创建新的对话
-    // todo 进入聊天路由页面
-    await router.push('/assistant/chat/' + params.get('cid'))
+    let cid;
+    if (res.code === '200') {
+      cid = res.data
+      loadConversations()
+    } else {
+      return
+    }
+    // 进入聊天路由页面
+    await router.push('/assistant/chat/' + cid)
   } catch (error) {
     console.error('发送消息失败:', error)
     message.error('发送消息失败，请稍后再试')
