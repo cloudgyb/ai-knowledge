@@ -47,7 +47,9 @@ import {type KnowledgeBase, knowledgeBaseApi} from "@/api/knowledgeBase";
 import {message, type SelectProps} from "ant-design-vue";
 import {useRouter} from "vue-router";
 import {chatApi} from "@/api/chat";
+import {useInputMsgStore} from "@/stores/userInputMsg";
 
+const inputMsgStore = useInputMsgStore()
 const router = useRouter()
 // 获取父路由提供的 conversationList
 const loadConversations = inject('loadConversations') as () => void
@@ -96,20 +98,7 @@ const handleSendMessage = async () => {
     return
   }
 
-  if (isStreaming.value) {
-    message.warning('请等待!')
-    return
-  }
-
-  // 开始流式请求
-  isStreaming.value = true
-
   try {
-    const params = new URLSearchParams({
-      cid: new Date().getTime().toString(),
-      text: conversationAddForm.value.text,
-      kbId: conversationAddForm.value.kbId || '',
-    })
     let title = conversationAddForm.value.text.trim()
     title = title.length > 20 ? '' : title
     // 调用后端接口创建新的对话
@@ -118,11 +107,15 @@ const handleSendMessage = async () => {
     })
     let cid;
     if (res.code === '200') {
-      cid = res.data
+      cid = res.data+""
       loadConversations()
     } else {
       return
     }
+    if (conversationAddForm.value.kbId) {
+      inputMsgStore.setKbId(conversationAddForm.value.kbId)
+    }
+    inputMsgStore.setInputMsg(conversationAddForm.value.text.trim())
     // 进入聊天路由页面
     await router.push('/assistant/chat/' + cid)
   } catch (error) {

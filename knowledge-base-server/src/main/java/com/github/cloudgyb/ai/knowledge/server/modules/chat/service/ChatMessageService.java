@@ -1,5 +1,6 @@
 package com.github.cloudgyb.ai.knowledge.server.modules.chat.service;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.github.cloudgyb.ai.knowledge.server.modules.chat.domain.ChatMessageAiContent;
 import com.github.cloudgyb.ai.knowledge.server.modules.chat.domain.ChatMessageAiThinking;
@@ -8,8 +9,12 @@ import com.github.cloudgyb.ai.knowledge.server.modules.chat.domain.ChatMessageUs
 import com.github.cloudgyb.ai.knowledge.server.modules.chat.mapper.ChatMessageContentMapper;
 import com.github.cloudgyb.ai.knowledge.server.modules.chat.mapper.ChatMessageThinkingMapper;
 import com.github.cloudgyb.ai.knowledge.server.modules.chat.mapper.ChatMessageUserMapper;
+import com.github.cloudgyb.ai.knowledge.server.modules.chat.vo.ChatConversationMsgVO;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * 对话消息
@@ -43,6 +48,7 @@ public class ChatMessageService extends ServiceImpl<ChatMessageUserMapper, ChatM
     public void addContentMessage(ChatMessageAiContent message) {
         this.chatMessageContentMapper.insert(message);
     }
+
     @Transactional(rollbackFor = Exception.class)
     public void appendThinkingMessage(Long id, String message) {
         this.chatMessageThinkingMapper.append(id, message);
@@ -59,6 +65,37 @@ public class ChatMessageService extends ServiceImpl<ChatMessageUserMapper, ChatM
         chatMessageUser.setId(umId);
         chatMessageUser.setMetadata(chatMessageMetadata);
         this.updateById(chatMessageUser);
+    }
+
+
+    /**
+     * 获取对话消息(最近 10条)
+     *
+     * @param cid 对话 id
+     */
+    public List<ChatConversationMsgVO> getConversationMsgs(Long cid) {
+        List<ChatConversationMsgVO> list = new ArrayList<>();
+        // 获取用户消息最近10条
+        LambdaQueryWrapper<ChatMessageUser> eq = new LambdaQueryWrapper<ChatMessageUser>()
+                .eq(ChatMessageUser::getCid, cid).orderByDesc(ChatMessageUser::getSendAt)
+                .last("LIMIT 10");
+        List<ChatMessageUser> userMsgs = this.list(eq).reversed();
+        for (ChatMessageUser userMsg : userMsgs) {
+            ChatConversationMsgVO vo = new ChatConversationMsgVO();
+            vo.setUserInputMsg(userMsg.getContent());
+            ChatMessageAiContent chatMessageAiContent = this.chatMessageContentMapper.selectOne(
+                    new LambdaQueryWrapper<ChatMessageAiContent>().eq(ChatMessageAiContent::getMuId, userMsg.getId()));
+            if (chatMessageAiContent != null) {
+                vo.setAiReplyMsg(chatMessageAiContent.getContent());
+            }
+            ChatMessageAiThinking chatMessageAiThinking = this.chatMessageThinkingMapper.selectOne(
+                    new LambdaQueryWrapper<ChatMessageAiThinking>().eq(ChatMessageAiThinking::getMuId, userMsg.getId()));
+            if (chatMessageAiThinking != null) {
+                vo.setAiThinkingMsg(chatMessageAiThinking.getContent());
+            }
+            list.add(vo);
+        }
+        return list;
     }
 }
 

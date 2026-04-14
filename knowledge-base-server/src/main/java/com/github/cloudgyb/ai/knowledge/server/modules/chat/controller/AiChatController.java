@@ -4,11 +4,14 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.github.cloudgyb.ai.knowledge.server.modules.chat.domain.ChatConversation;
 import com.github.cloudgyb.ai.knowledge.server.modules.chat.service.AiChatConversationService;
 import com.github.cloudgyb.ai.knowledge.server.modules.chat.service.AiChatService;
+import com.github.cloudgyb.ai.knowledge.server.modules.chat.vo.ChatConversationMsgVO;
 import com.github.cloudgyb.ai.knowledge.server.modules.commons.ApiResponse;
 import jakarta.validation.constraints.NotNull;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+
+import java.util.List;
 
 /**
  * @author cloudgyb
@@ -35,19 +38,19 @@ public class AiChatController {
 
     @GetMapping("/c")
     public ApiResponse<Page<ChatConversation>> getConversations(@RequestParam("pageNum") int pageNum,
-                                              @RequestParam("pageSize") int pageSize) {
+                                                                @RequestParam("pageSize") int pageSize) {
         Page<ChatConversation> page = aiChatConversationService.page(pageNum, pageSize);
         return ApiResponse.success(page);
     }
 
     @GetMapping("/c/history")
-    public ApiResponse<Void> getConversationMsgs(@RequestParam("id") Long id) {
-        aiChatConversationService.getConversationMsgs(id);
-        return ApiResponse.success();
+    public ApiResponse<List<ChatConversationMsgVO>> getConversationMsgs(@RequestParam("id") Long id) {
+        List<ChatConversationMsgVO> conversationMsgs = aiChatConversationService.getConversationMsgs(id);
+        return ApiResponse.success(conversationMsgs);
     }
 
     @PostMapping("/c")
-    public ApiResponse<Long> addConversation(@RequestParam(value = "title", required = false) String title) {
+    public ApiResponse<String> addConversation(@RequestParam(value = "title", required = false) String title) {
         return ApiResponse.success(aiChatConversationService.addConversation(title));
     }
 

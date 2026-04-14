@@ -1,6 +1,6 @@
 import request from '@/utils/request'
 import type {ApiResponse, ApiResponsePagination} from "@/api/model/types";
-import type {Conversation} from "@/api/model/chatTypes";
+import type {ChatConversationMsgVO, Conversation} from "@/api/model/chatTypes";
 
 export interface ChatMessage {
     role: 'user' | 'assistant'
@@ -19,7 +19,7 @@ export const chatApi = {
         const params = {pageNum: 1, pageSize: 10}
         return request.get('/ai/chat/c', {params})
     },
-    addConversation(data: any): Promise<ApiResponse<Number>> {
+    addConversation(data: any): Promise<ApiResponse<string>> {
         return request.post('/ai/chat/c', data, {
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded'
@@ -35,5 +35,8 @@ export const chatApi = {
                 'Content-Type': 'application/x-www-form-urlencoded'
             }
         })
-    }
+    },
+    getConversationMessages(id: string): Promise<ApiResponse<ChatConversationMsgVO[]>> {
+        return request.get('/ai/chat/c/history', {params: {id}})
+    },
 }

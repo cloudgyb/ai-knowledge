@@ -4,12 +4,14 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.github.cloudgyb.ai.knowledge.server.modules.chat.ConversationStatus;
 import com.github.cloudgyb.ai.knowledge.server.modules.chat.domain.ChatConversation;
+import com.github.cloudgyb.ai.knowledge.server.modules.chat.vo.ChatConversationMsgVO;
 import com.github.cloudgyb.ai.knowledge.server.modules.commons.BusinessException;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Date;
+import java.util.List;
 
 /**
  * AI 聊天对话服务实现
@@ -20,13 +22,16 @@ import java.util.Date;
 @Service
 public class AiChatConversationService {
     private final ChatConversationService chatConversationService;
+    private final ChatMessageService chatMessageService;
 
-    public AiChatConversationService(ChatConversationService chatConversationService) {
+    public AiChatConversationService(ChatConversationService chatConversationService,
+                                     ChatMessageService chatMessageService) {
         this.chatConversationService = chatConversationService;
+        this.chatMessageService = chatMessageService;
     }
 
     @Transactional(rollbackFor = Exception.class)
-    public Long addConversation(String title) {
+    public String addConversation(String title) {
         title = StringUtils.isBlank(title) ? "新对话" : title;
         ChatConversation chatConversation = new ChatConversation();
         chatConversation.setUserId(1L);
@@ -36,7 +41,7 @@ public class AiChatConversationService {
         if (!chatConversationService.save(chatConversation)) {
             throw new BusinessException("创建对话失败！");
         }
-        return chatConversation.getId();
+        return chatConversation.getId() + "";
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -75,10 +80,13 @@ public class AiChatConversationService {
         return chatConversationService.page(Page.of(pageNum, pageSize), queryWrapper);
     }
 
-    public void getConversationMsgs(Long id) {
+    public List<ChatConversationMsgVO> getConversationMsgs(Long id) {
         ChatConversation chatConversation = chatConversationService.getById(id);
         if (chatConversation == null) {
             throw new BusinessException("对话不存在！");
         }
+
+        return chatMessageService.getConversationMsgs(id);
+
     }
 }

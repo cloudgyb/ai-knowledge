@@ -1,107 +1,86 @@
 <template>
   <div class="assistant-page">
-    <a-row class="chat-container" :gutter="16">
-      <!-- 左侧知识库选择 -->
-      <a-col :span="6" class="sidebar">
-        <a-card title="选择知识库" :bordered="false" class="knowledge-card">
-          <a-checkbox-group v-model:value="selectedKnowledgeBases" style="width: 100%">
-            <a-space direction="vertical" style="width: 100%">
-              <div
-                  v-for="kb in knowledgeBaseList"
-                  :key="kb.id"
-                  class="kb-item"
-              >
-                <a-checkbox :value="kb.id">
-                  {{ kb.name }}
-                </a-checkbox>
-              </div>
-            </a-space>
-          </a-checkbox-group>
-
-          <a-divider/>
-
-          <a-button type="primary" block @click="handleSelectAll">
-            全选
-          </a-button>
-          <a-button block style="margin-top: 8px" @click="handleClearAll">
-            清空
-          </a-button>
-        </a-card>
-      </a-col>
-
-      <!-- 右侧聊天区域 -->
-      <a-col :span="18" class="chat-area">
-        <a-card :bordered="false" class="chat-card">
-          <!-- 聊天记录 -->
-          <div ref="chatMessagesRef" class="chat-messages">
-            <div
-                v-for="(message, index) in chatMessages"
-                :key="index"
-                :class="['message', message.role]"
-            >
-              <div class="message-avatar">
-                <a-avatar v-if="message.role === 'user'" style="background-color: #1890ff">
-                  <UserOutlined/>
-                </a-avatar>
-                <a-avatar v-else style="background-color: #52c41a">
-                  <RobotOutlined/>
-                </a-avatar>
-                <div v-if="message.isLoading" class="message assistant streaming">
-                  <div class="message-content">
-                    <div class="message-bubble">
-                      <a-spin :indicator="loadingIndicator"/>
-                      <span style="margin-left: 8px">思考中...</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
+    <!-- 右侧聊天区域 -->
+    <a-card :bordered="false" class="chat-card">
+      <!-- 聊天记录 -->
+      <div ref="chatMessagesRef" class="chat-messages">
+        <div
+            v-for="(message, index) in chatMessages"
+            :key="index"
+            :class="['message', message.role]"
+        >
+          <div class="message-avatar">
+            <a-avatar v-if="message.role === 'user'" style="background-color: #1890ff">
+              <UserOutlined/>
+            </a-avatar>
+            <a-avatar v-else style="background-color: #52c41a">
+              <RobotOutlined/>
+            </a-avatar>
+            <div v-if="message.isLoading" class="message assistant streaming">
               <div class="message-content">
                 <div class="message-bubble">
-                  <AgentMarkdown :content="message.content"/>
+                  <a-spin :indicator="loadingIndicator"/>
+                  <span style="margin-left: 8px">思考中...</span>
                 </div>
               </div>
             </div>
           </div>
-
-          <!-- 输入区域 -->
-          <div class="chat-input">
-            <a-textarea
-                v-model:value="inputMessage"
-                placeholder="请输入您的问题..."
-                :auto-size="{ minRows: 3, maxRows: 6 }"
-                @pressEnter="handleSendMessage"
-                :disabled="isStreaming"
-            />
-            <div class="input-actions">
-              <a-button
-                  type="primary"
-                  :loading="isStreaming"
-                  @click="handleSendMessage"
-                  style="width: 120px"
-              >
-                <template #icon>
-                  <SendOutlined/>
-                </template>
-                发送
-              </a-button>
+          <div class="message-content">
+            <div class="message-bubble">
+              <AgentMarkdown :content="message.content"/>
             </div>
           </div>
-        </a-card>
-      </a-col>
-    </a-row>
+        </div>
+      </div>
+
+      <!-- 输入区域 -->
+      <div class="chat-input">
+        <a-textarea
+            v-model:value="inputMessage"
+            placeholder="请输入您的问题..."
+            :auto-size="{ minRows: 3, maxRows: 6 }"
+            @pressEnter="handleSendMessage"
+            :disabled="isStreaming"
+        />
+        <div class="input-actions">
+          <a-select placeholder="选择知识库"
+                    v-model:value="selectedKB"
+                    show-search
+                    :filter-option="kbSelectOptionFilter"
+                    :options="kbSelectOptions"
+                    style="width: 100px">
+          </a-select>
+          <a-button
+              type="primary"
+              :loading="isStreaming"
+              @click="handleSendMessage"
+              style="width: 120px"
+          >
+            <template #icon>
+              <SendOutlined/>
+            </template>
+            发送
+          </a-button>
+        </div>
+      </div>
+    </a-card>
   </div>
 </template>
 
 <script setup lang="ts">
-import {ref, onMounted, nextTick, watch, inject, type Ref} from 'vue'
-import {message} from 'ant-design-vue'
+import {ref, onMounted, nextTick, watch, inject, type Ref, type Reactive} from 'vue'
+import {message, type SelectProps} from 'ant-design-vue'
 import {UserOutlined, RobotOutlined, SendOutlined, LoadingOutlined} from '@ant-design/icons-vue'
 import {knowledgeBaseApi} from '@/api/knowledgeBase'
+import {chatApi} from '@/api/chat'
 import type {KnowledgeBase} from '@/api/knowledgeBase'
 import {h} from 'vue'
 import {AgentMarkdown} from 'agent-markdown-vue';
 import 'x-markdown-vue/style'
 import {useRoute} from "vue-router";
+import {useInputMsgStore} from "@/stores/userInputMsg";
+
+const inputMsgStore = useInputMsgStore()
 
 const route = useRoute()
 const selectedKeys = inject('selectedKeys') as Ref<string[]>
@@ -109,28 +88,15 @@ const selectedKeys = inject('selectedKeys') as Ref<string[]>
 watch(() => route.params.cid, (cid, preCid) => {
   console.log("当前对话id：" + cid)
   console.log("上一个对话id：" + preCid)
+  init()
 })
 // 加载图标
 const loadingIndicator = () => h(LoadingOutlined, {spin: true})
-
 // 知识库列表
 const knowledgeBaseList = ref<KnowledgeBase[]>([])
-const selectedKnowledgeBases = ref<number[]>([])
-
-// 聊天消息
-interface ChatMessage {
-  role: 'user' | 'assistant'
-  content: string
-  isLoading?: boolean
-}
-
-const chatMessages = ref<ChatMessage[]>([])
-const inputMessage = ref('')
-const isStreaming = ref(false)
-
-// 聊天记录滚动容器
-const chatMessagesRef = ref<HTMLElement>()
-
+// 选择的知识库列表
+const kbSelectOptions = ref<SelectProps["options"]>([])
+const selectedKB = ref<number>()
 // 加载知识库列表
 const loadKnowledgeBases = async () => {
   try {
@@ -140,21 +106,34 @@ const loadKnowledgeBases = async () => {
     })
     if (res.code === '200') {
       knowledgeBaseList.value = res.data.records || []
+      kbSelectOptions.value = knowledgeBaseList.value.map(kb => ({
+        value: kb.id,
+        label: kb.name
+      }))
     }
   } catch (error) {
     console.error('加载知识库列表失败:', error)
   }
 }
-
-// 全选
-const handleSelectAll = () => {
-  selectedKnowledgeBases.value = knowledgeBaseList.value.map(kb => kb.id)
+const kbSelectOptionFilter = (inputValue: string, option: any) => {
+  return option.label.toLowerCase().includes(inputValue.toLowerCase())
 }
 
-// 清空
-const handleClearAll = () => {
-  selectedKnowledgeBases.value = []
+
+// 聊天消息
+interface ChatMessage {
+  role: 'user' | 'assistant'
+  content: string
+  isLoading?: boolean
 }
+
+const currentCid = ref('')
+const chatMessages = ref<ChatMessage[]>([])
+const inputMessage = ref('')
+const isStreaming = ref(false)
+
+// 聊天记录滚动容器
+const chatMessagesRef = ref<HTMLElement>()
 
 // 滚动到底部
 const scrollToBottom = async () => {
@@ -201,9 +180,9 @@ const handleSendMessage = async () => {
   try {
     // 使用 EventSource 进行 SSE 流式请求
     const params = new URLSearchParams({
-      t: new Date().getTime().toString(),
+      cid: currentCid.value,
       text: userMessage,
-      kbId: selectedKnowledgeBases.value.join(',')
+      kbId: selectedKB.value ? selectedKB.value.toString() : ''
     })
 
     const eventSource = new EventSource(`/api/ai/chat/connect?${params.toString()}`)
@@ -257,21 +236,60 @@ const handleSendMessage = async () => {
     chatMessages.value.pop()
   }
 }
-
+/**
+ * 加载对话
+ * @param cid 对话 id
+ */
+const loadConversationMsgs = async (cid: string) => {
+  const res = await chatApi.getConversationMessages(cid)
+  if (res.code === '200') {
+    const data = res.data;
+    const msgs: ChatMessage[] = []
+    data.forEach(msg => {
+      msgs.push({
+        role: 'user',
+        content: msg.userInputMsg,
+        isLoading: false
+      })
+      msgs.push({
+        role: 'assistant',
+        content: msg.aiReplyMsg,
+        isLoading: false
+      })
+    })
+    chatMessages.value = msgs
+    await scrollToBottom()
+  }
+}
+const init = async () => {
+  let path = route.path;
+  if (path.startsWith('/assistant/chat/')) {
+    const cid = route.params.cid + '';
+    currentCid.value = cid
+    selectedKeys.value = [cid]
+    await loadConversationMsgs(cid)
+    if (inputMsgStore.kbId) {
+      selectedKB.value = inputMsgStore.kbId
+    }
+    inputMessage.value = inputMsgStore.inputMsg?.trim()
+    inputMsgStore.clear()
+    if (inputMessage.value && inputMessage.value.trim() !== '') {
+      await handleSendMessage()
+    }
+  }
+  await loadKnowledgeBases()
+}
 onMounted(() => {
   console.log("chat onMounted")
-  let path = route.path;
-  console.log("当前路径：" + path)
-  if (path.startsWith('/assistant/chat/')) {
-    selectedKeys.value = [route.params.cid + '']
-  }
-  loadKnowledgeBases()
+  init()
 })
 </script>
 
 <style scoped>
 .assistant-page {
+  margin: 0 auto;
   padding: 0;
+  width: 800px;
   height: calc(100vh - 128px);
 }
 
@@ -313,9 +331,9 @@ onMounted(() => {
   flex: 1;
   overflow-y: auto;
   padding: 16px;
-  background: #f5f5f5;
   border-radius: 4px;
   margin-bottom: 16px;
+  max-height: calc(100vh - 320px);
 }
 
 .message {
@@ -358,10 +376,9 @@ onMounted(() => {
 }
 
 .message-bubble {
-  padding: 12px 16px;
+  padding: 5px 10px;
   border-radius: 8px;
-  word-wrap: break-word;
-  white-space: pre-wrap;
+
 }
 
 .message.user .message-bubble {
@@ -377,11 +394,14 @@ onMounted(() => {
 .chat-input {
   border-top: 1px solid #f0f0f0;
   padding-top: 16px;
+  position: fixed;
+  width: 750px;
+  bottom: 60px;
 }
 
 .input-actions {
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
   margin-top: 8px;
 }
 
@@ -398,4 +418,11 @@ onMounted(() => {
 .chat-messages::-webkit-scrollbar-track {
   background: transparent;
 }
+
+:deep(p) {
+  margin-bottom: 0 !important;
+  margin-block-start: 0;
+  margin-block-end: 0;
+}
+
 </style>

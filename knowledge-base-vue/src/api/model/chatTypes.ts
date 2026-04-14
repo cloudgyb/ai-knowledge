@@ -3,3 +3,9 @@ export interface Conversation {
     title: string
     lastActiveTime: string
 }
+
+export interface ChatConversationMsgVO {
+    userInputMsg: string
+    aiReplyMsg: string
+    aiThinkingMsg: string
+}
