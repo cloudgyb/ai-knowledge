@@ -27,10 +27,9 @@
           </div>
           <div class="message-content">
             <div class="message-bubble">
-              <!--
-                            <AgentMarkdown :content="message.content"/>
-              -->
-              <MarkdownRenderer :source="message.content" :theme="'light'"/>
+              <article class="vue-markdown-wrapper">
+                <MarkdownRenderer :source="message.content" :theme="'light'"/>
+              </article>
             </div>
           </div>
         </div>
@@ -71,7 +70,7 @@
 </template>
 
 <script setup lang="ts">
-import {ref, onMounted, nextTick, watch, inject, type Ref, type Reactive} from 'vue'
+import {ref, onMounted, nextTick, watch, inject, type Ref} from 'vue'
 import {message, type SelectProps} from 'ant-design-vue'
 import {UserOutlined, RobotOutlined, SendOutlined, LoadingOutlined} from '@ant-design/icons-vue'
 import {knowledgeBaseApi} from '@/api/knowledgeBase'
@@ -82,6 +81,7 @@ import {useRoute} from "vue-router";
 import {useInputMsgStore} from "@/stores/userInputMsg";
 import {MarkdownRenderer} from "@/components/markdown/MarkdownRenderer";
 import "@/assets/markdown-render.css"
+import '@/style.css'
 
 const inputMsgStore = useInputMsgStore()
 
@@ -296,34 +296,6 @@ onMounted(() => {
   height: calc(100vh - 128px);
 }
 
-.chat-container {
-  height: 100%;
-}
-
-.sidebar {
-  height: 100%;
-  overflow-y: auto;
-}
-
-.knowledge-card {
-  height: 100%;
-}
-
-.kb-item {
-  padding: 8px 0;
-  border-bottom: 1px solid #f0f0f0;
-}
-
-.kb-item:last-child {
-  border-bottom: none;
-}
-
-.chat-area {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-}
-
 .chat-card {
   height: 100%;
   display: flex;
@@ -399,7 +371,7 @@ onMounted(() => {
   padding-top: 16px;
   position: fixed;
   width: 750px;
-  bottom: 60px;
+  bottom: 40px;
 }
 
 .input-actions {
@@ -426,6 +398,18 @@ onMounted(() => {
   margin-bottom: 0 !important;
   margin-block-start: 0;
   margin-block-end: 0;
+}
+
+:deep(ul li) {
+  list-style: circle;
+}
+
+:deep(ol li) {
+  list-style: decimal;
+}
+
+:deep(li > ul), :deep(li > ol) {
+  margin-left: 15px;
 }
 
 </style>

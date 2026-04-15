@@ -94,14 +94,27 @@ const handleClearAllChat = () => {
 }
 
 const selectedKeys = ref<any[]>([]);
+
+/**
+ * 对话侧边栏列表-选中当前对话
+ */
+function selectConversation() {
+  /*if (conversationList.value.length > 0) {
+    selectedKeys.value = [conversationList.value[0].id]
+  }*/
+  let path = route.path;
+  if (path.startsWith('/assistant/chat/')) {
+    const cid = route.params.cid + ''
+    selectedKeys.value = [cid]
+  }
+}
+
 const loadConversations = async () => {
   try {
     const res = await chatApi.getConversations()
     if (res.code === '200') {
       conversationList.value = res.data.records
-      if (res.data.records.length > 0) {
-        selectedKeys.value = [res.data.records[0].id]
-      }
+      selectConversation()
     }
   } catch (error) {
     console.error('加载会话列表失败:', error)
