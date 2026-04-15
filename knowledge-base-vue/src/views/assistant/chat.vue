@@ -399,7 +399,9 @@ onMounted(() => {
   margin-block-start: 0;
   margin-block-end: 0;
 }
-
+:deep(li) {
+  margin: 10px 0;
+}
 :deep(ul li) {
   list-style: circle;
 }
