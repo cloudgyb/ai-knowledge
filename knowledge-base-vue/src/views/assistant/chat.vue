@@ -27,7 +27,10 @@
           </div>
           <div class="message-content">
             <div class="message-bubble">
-              <AgentMarkdown :content="message.content"/>
+              <!--
+                            <AgentMarkdown :content="message.content"/>
+              -->
+              <MarkdownRenderer :source="message.content" :theme="'light'"/>
             </div>
           </div>
         </div>
@@ -75,10 +78,10 @@ import {knowledgeBaseApi} from '@/api/knowledgeBase'
 import {chatApi} from '@/api/chat'
 import type {KnowledgeBase} from '@/api/knowledgeBase'
 import {h} from 'vue'
-import {AgentMarkdown} from 'agent-markdown-vue';
-import 'x-markdown-vue/style'
 import {useRoute} from "vue-router";
 import {useInputMsgStore} from "@/stores/userInputMsg";
+import {MarkdownRenderer} from "@/components/markdown/MarkdownRenderer";
+import "@/assets/markdown-render.css"
 
 const inputMsgStore = useInputMsgStore()
 

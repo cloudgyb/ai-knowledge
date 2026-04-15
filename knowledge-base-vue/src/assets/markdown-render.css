@@ -1,0 +1,14 @@
+.vue-markdown-wrapper > *,
+.vue-markdown-wrapper .text-segmenter,
+.vue-markdown-wrapper .shiki-stream span {
+    animation: fade-in 0.5s ease-in-out;
+}
+
+@keyframes fade-in {
+    0% {
+        opacity: 0;
+    }
+    100% {
+        opacity: 1;
+    }
+}
