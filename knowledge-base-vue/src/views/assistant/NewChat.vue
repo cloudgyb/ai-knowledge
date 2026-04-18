@@ -27,13 +27,13 @@
           </template>
         </a-select>
         <a-button type="primary" :disabled="sendBtnDisabled"
-                  :loading="isStreaming"
+                  :loading="isSending"
                   @click="handleSendMessage" style="width: 120px;color: #fff"
                   :style="{background: sendBtnDisabled ? '#6da3ef' : ''}">
           <template #icon>
             <SendOutlined/>
           </template>
-          发送
+          {{isSending ? '发送中...' : '发送'}}
         </a-button>
       </a-flex>
     </a-flex>
@@ -63,7 +63,7 @@ const knowledgeBaseList = ref<KnowledgeBase[]>([])
 const kbSelectOptions = ref<SelectProps["options"]>([])
 
 
-const isStreaming = ref(false)
+const isSending = ref(false)
 const sendBtnDisabled = computed(() => {
   return !conversationAddForm.value.text.trim()
 })
@@ -101,13 +101,14 @@ const handleSendMessage = async () => {
   try {
     let title = conversationAddForm.value.text.trim()
     title = title.length > 20 ? '' : title
+    isSending.value = true
     // 调用后端接口创建新的对话
     const res = await chatApi.addConversation({
       title: title
     })
     let cid;
     if (res.code === '200') {
-      cid = res.data+""
+      cid = res.data + ""
       loadConversations()
     } else {
       return
@@ -122,7 +123,7 @@ const handleSendMessage = async () => {
     console.error('发送消息失败:', error)
     message.error('发送消息失败，请稍后再试')
   } finally {
-    isStreaming.value = false
+    isSending.value = false
   }
 }
 
