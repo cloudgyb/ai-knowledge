@@ -74,7 +74,7 @@ public class AiChatService {
         }
         chatConversationService.updateConversationStatus(cid, ConversationStatus.ACTIVE,
                 text.length() < 20 ? text : null, new Date());
-        SseEmitter sseEmitter = new SseEmitter(60000L);
+        SseEmitter sseEmitter = new SseEmitter(0L);
         sseEmitter.onCompletion(() -> System.out.println("连接完成"));
         sseEmitter.onTimeout(() -> System.out.println("连接超时"));
         sseEmitter.onError(throwable -> System.out.println("连接错误"));
