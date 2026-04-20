@@ -126,6 +126,19 @@ const handleDeleteConversation = async (id: string) => {
     if (res.code === '200') {
       message.success('删除成功')
       await loadConversations()
+      const path = route.path;
+      if (path.startsWith('/assistant/chat/')) {
+        const cid = route.params.cid + ''
+        if (cid === id) {
+          if (conversationList.value.length > 0) {
+            selectedKeys.value = [conversationList.value[0].id]
+            await router.push('/assistant/chat/' + conversationList.value[0].id)
+          } else {
+            selectedKeys.value = []
+            await router.push('/assistant')
+          }
+        }
+      }
     }
   } catch (error) {
     message.error('删除失败')
