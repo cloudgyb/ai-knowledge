@@ -1,0 +1,57 @@
+server:
+  port: 8000
+
+spring:
+  application:
+    name: knowledge-base-server
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: root
+    password: 123456
+    url: jdbc:mysql://127.0.0.1:3306/knowledge_base?useUnicode=true&characterEncoding=utf-8&useSSL=false&allowPublicKeyRetrieval=true&zeroDateTimeBehavior=convertToNull&transformedBitIsBoolean=true&allowMultiQueries=true&tinyInt1isBit=false
+  jackson:
+    date-format: 'yyyy-MM-dd HH:mm:ss'
+    time-zone: GMT+8
+  cloud:
+    nacos:
+      discovery:
+        enabled: true
+        server-addr: 127.0.0.1:8848
+        namespace: public
+        username: nacos
+        password: nacos
+        ip: 127.0.0.1
+        weight: 1
+        cluster-name: DEFAULT
+  servlet:
+    multipart:
+      max-file-size: 10485760
+      location: D:\IdeaProjects\ai-knowledge\
+
+mybatis-plus:
+  global-config:
+    db-config:
+      insert-strategy: not_null
+      update-strategy: not_null
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+
+
+
+knowledge-base:
+  doc:
+    storage:
+      path: ./.tmp/knowledge-base/doc
+
+ai:
+  embedding:
+    storage:
+      pgvector:
+        host: 127.0.0.1
+        port: 5432
+        database: postgres
+        user: postgres
+        password: postgres
+        table: embedding_store
+        metadataStorageMode: COMBINED_JSON
