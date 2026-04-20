@@ -38,6 +38,11 @@
     </a-card>
     <!-- 模型列表 -->
     <a-card :bordered="false">
+      <div v-if="loading"
+           style="text-align: center; position: absolute;z-index: 999;background: rgba(0,0,0,0);top: 60px;left: 50%">
+        <a-spin/>
+      </div>
+      <a-empty v-if="aiModelList.length === 0 && !loading" :image="simpleImage"/>
       <a-row :gutter="[16, 16]">
         <a-col v-for="model in aiModelList" :key="model.id" :xs="24" :sm="12" :md="8" :lg="6">
           <a-card size="small" hoverable class="model-card">
@@ -211,8 +216,11 @@ import {
   ApiOutlined,
   EditOutlined
 } from '@ant-design/icons-vue'
+import {Empty} from 'ant-design-vue';
 import {modelApi} from '@/api/model'
 import type {AiModel, AiModelProvider, AiModelSearchForm, SysAiModel} from '@/api/model/aiModelTypes'
+
+const simpleImage = Empty.PRESENTED_IMAGE_SIMPLE;
 // 模型类型 Select 下拉选项
 const aiModelTypeOptions = ref<SelectProps['options']>([])
 // 搜索表单
@@ -359,10 +367,11 @@ const loadSysAiModels = async (providerId: number) => {
   }
 
 }
-
+const loading = ref<boolean>(false)
 // 加载数据
 const loadModels = async () => {
   try {
+    loading.value = true
     const res = await modelApi.getList({
       name: searchForm.value.modelName,
       type: searchForm.value.modelType,
@@ -375,6 +384,8 @@ const loadModels = async () => {
     }
   } catch (error) {
     console.error('加载模型列表失败:', error)
+  } finally {
+    loading.value = false
   }
 }
 

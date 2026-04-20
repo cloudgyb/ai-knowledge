@@ -44,6 +44,11 @@
 
     <!-- 知识库列表 -->
     <a-card :bordered="false">
+      <div v-if="loading"
+          style="text-align: center; position: absolute;z-index: 999;background: rgba(0,0,0,0);top: 100px;left: 50%">
+        <a-spin/>
+      </div>
+      <a-empty v-if="knowledgeBaseList.length === 0 && !loading" :image="simpleImage"/>
       <a-row :gutter="[16, 16]">
         <a-col v-for="kb in knowledgeBaseList" :key="kb.id" :xs="24" :sm="12" :md="8" :lg="6">
           <a-card hoverable class="kb-card" size="small">
@@ -272,6 +277,7 @@ import {
   UploadOutlined,
   InboxOutlined
 } from '@ant-design/icons-vue'
+import {Empty} from 'ant-design-vue';
 import {knowledgeBaseApi} from '@/api/knowledgeBase'
 import type {KnowledgeBase} from '@/api/knowledgeBase'
 import {modelApi} from '@/api/model'
@@ -279,6 +285,8 @@ import type {AiModel} from "@/api/model/aiModelTypes";
 import {kbDocApi} from '@/api/kbDoc'
 import {DocStatus, type KnowledgeBaseDoc} from "@/api/model/knowledgeBaseTypes";
 
+const simpleImage = Empty.PRESENTED_IMAGE_SIMPLE;
+const loading = ref<boolean>(false)
 // 搜索表单
 const searchForm = ref({
   name: '',
@@ -349,6 +357,7 @@ const loadAiVectorModels = async () => {
 // 加载数据
 const loadKnowledgeBases = async () => {
   try {
+    loading.value = true
     const res = await knowledgeBaseApi.getList({
       pageNum: pagination.current,
       pageSize: pagination.pageSize,
@@ -361,6 +370,8 @@ const loadKnowledgeBases = async () => {
     }
   } catch (error) {
     console.error('加载知识库列表失败:', error)
+  } finally {
+    loading.value = false
   }
 }
 
