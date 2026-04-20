@@ -44,28 +44,25 @@ public class AiChatConversationService {
         return chatConversation.getId() + "";
     }
 
+    /**
+     * 删除对话
+     *
+     * @param id 对话 id
+     */
     @Transactional(rollbackFor = Exception.class)
     public void deleteConversation(Long id) {
         if (!chatConversationService.removeById(id)) {
             throw new BusinessException("删除对话失败！");
+        } else {
+            chatMessageService.deleteMessage(id);
         }
     }
 
     @Transactional(rollbackFor = Exception.class)
-    public void updateConversation(Long id, String title) {
+    public void updateConversationTitle(Long id, String title) {
         ChatConversation chatConversation = new ChatConversation();
         chatConversation.setId(id);
         chatConversation.setTitle(title);
-        if (!chatConversationService.updateById(chatConversation)) {
-            throw new BusinessException("更新对话失败！");
-        }
-    }
-
-    @Transactional(rollbackFor = Exception.class)
-    public void updateConversation(Long id, Date lastActiveTime) {
-        ChatConversation chatConversation = new ChatConversation();
-        chatConversation.setId(id);
-        chatConversation.setLastActiveTime(lastActiveTime);
         if (!chatConversationService.updateById(chatConversation)) {
             throw new BusinessException("更新对话失败！");
         }

@@ -83,9 +83,9 @@ public class AiChatService {
                 doChat(sseEmitter, cid, text, kbId);
             } catch (Exception e) {
                 sseEmitter.complete();
-                chatConversationService.updateConversationStatus(cid, ConversationStatus.FAILED, null, null);
+                chatConversationService.updateConversationStatus(cid, ConversationStatus.FAILED, null, new Date());
             }
-            chatConversationService.updateConversationStatus(cid, ConversationStatus.ENDED, null, null);
+            chatConversationService.updateConversationStatus(cid, ConversationStatus.ENDED, null, new Date());
         });
         return sseEmitter;
     }

@@ -67,6 +67,20 @@ public class ChatMessageService extends ServiceImpl<ChatMessageUserMapper, ChatM
         this.updateById(chatMessageUser);
     }
 
+    /**
+     * 删除对话消息
+     *
+     * @param cid 对话 id
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public void deleteMessage(Long cid) {
+        this.remove(new LambdaQueryWrapper<ChatMessageUser>().eq(ChatMessageUser::getCid, cid));
+        this.chatMessageThinkingMapper.delete(new LambdaQueryWrapper<ChatMessageAiThinking>()
+                .eq(ChatMessageAiThinking::getCid, cid));
+        this.chatMessageContentMapper.delete(new LambdaQueryWrapper<ChatMessageAiContent>()
+                .eq(ChatMessageAiContent::getCid, cid));
+    }
+
 
     /**
      * 获取对话消息(最近 10条)

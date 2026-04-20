@@ -57,7 +57,7 @@ public class AiChatController {
     @PutMapping("/c")
     public ApiResponse<Void> updateConversation(@RequestParam("id") Long id,
                                                 @RequestParam(value = "title") String title) {
-        aiChatConversationService.updateConversation(id, title);
+        aiChatConversationService.updateConversationTitle(id, title);
         return ApiResponse.success();
     }
 
