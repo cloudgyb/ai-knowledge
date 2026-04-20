@@ -128,11 +128,12 @@ public class AiChatService {
         AiServices<Assistant> aiServicesBuilder = AiServices
                 .builder(Assistant.class)
                 .streamingChatModel(streamingChatModel);
-        String systemMessage = "你是一个问答助手，你的名字：AI 小助手；请根据用户提问使用中文回答问题，并尽量详细";
+        String systemMessage = "你是一个问答助手，你的名字：AI 小助手；请根据用户提问使用中文回答问题，并尽量详细。" +
+                "格式必须是正确 markdown 格式。";
         if (embeddingStoreContentRetriever != null) {
             aiServicesBuilder.contentRetriever(embeddingStoreContentRetriever);
             systemMessage = "你是一个知识库问答助手，你的名字：AI 小助手；请根据知识库内容回答问题。" +
-                    "请使用中文回答，并尽量详细";
+                    "请使用中文回答，并尽量详细。格式必须是正确 markdown 格式。";
         }
         Assistant assistant = aiServicesBuilder
                 .systemMessage(systemMessage)

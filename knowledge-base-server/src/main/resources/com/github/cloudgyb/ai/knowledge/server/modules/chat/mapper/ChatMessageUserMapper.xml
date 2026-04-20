@@ -12,6 +12,8 @@
         <result property="contentType" column="content_type"/>
         <result property="sendAt" column="send_at"/>
         <result property="metadata" column="metadata"
+                javaType="com.github.cloudgyb.ai.knowledge.server.modules.chat.domain.ChatMessageMetadata"
+                jdbcType="VARCHAR"
                 typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler"/>
     </resultMap>
 
