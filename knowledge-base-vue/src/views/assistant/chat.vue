@@ -81,7 +81,7 @@ import {useRoute} from "vue-router";
 import {useInputMsgStore} from "@/stores/userInputMsg";
 import {MarkdownRenderer} from "@/components/markdown/MarkdownRenderer";
 import "@/assets/markdown-render.css"
-import '@/style.css'
+//import '@/style.css'
 
 const inputMsgStore = useInputMsgStore()
 
@@ -399,9 +399,11 @@ onMounted(() => {
   margin-block-start: 0;
   margin-block-end: 0;
 }
+
 :deep(li) {
   margin: 10px 0;
 }
+
 :deep(ul li) {
   list-style: circle;
 }

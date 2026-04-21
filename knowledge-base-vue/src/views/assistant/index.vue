@@ -61,6 +61,7 @@
       </a-col>
       <!-- 右侧聊天区域 -->
       <a-col flex="auto" style="height: 100%">
+        <ai-model-select @change="handleAiModelSelect" style="position: absolute;top: 10px;z-index: 999"/>
         <router-view/>
       </a-col>
     </a-row>
@@ -74,6 +75,7 @@ import {message, type MenuProps} from 'ant-design-vue'
 import type {Conversation} from "@/api/model/chatTypes";
 import {useRouter, useRoute} from "vue-router";
 import {chatApi} from "@/api/chat";
+import AiModelSelect from "@/components/ai/AiModelSelect.vue";
 
 const router = useRouter()
 const route = useRoute()
@@ -153,6 +155,9 @@ const handleRenameConversation = async (conversation: Conversation) => {
       conversation.title = newTitle
     }
   }
+}
+const handleAiModelSelect = (value: number) => {
+  console.log('handleAiModelSelect', value)
 }
 const selectKeys = (key: string) => {
   debugger
