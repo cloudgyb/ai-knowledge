@@ -32,8 +32,9 @@ public class AiChatController {
     @GetMapping(value = "/connect", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public SseEmitter connect(@NotNull @RequestParam("cid") Long cid,
                               @NotNull @RequestParam("text") String text,
-                              @RequestParam(value = "kbId", required = false) Integer kbId) {
-        return aiChatService.chat(cid, text, kbId);
+                              @RequestParam(value = "kbId", required = false) Integer kbId,
+                              @NotNull @RequestParam(value = "mid") Integer mid) {
+        return aiChatService.chat(cid, text, kbId, mid);
     }
 
     @GetMapping("/c")

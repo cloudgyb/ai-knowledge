@@ -85,6 +85,8 @@ import "@/assets/markdown-render.css"
 
 const inputMsgStore = useInputMsgStore()
 
+const loadConversations = inject('loadConversations') as () => void
+
 const route = useRoute()
 const selectedKeys = inject('selectedKeys') as Ref<string[]>
 // 监听路由切换
@@ -185,45 +187,48 @@ const handleSendMessage = async () => {
     const params = new URLSearchParams({
       cid: currentCid.value,
       text: userMessage,
-      kbId: selectedKB.value ? selectedKB.value.toString() : ''
+      kbId: selectedKB.value ? selectedKB.value.toString() : '',
+      mid: inputMsgStore.aiModelId + ""
     })
 
     const eventSource = new EventSource(`/api/ai/chat/connect?${params.toString()}`)
 
     let accumulatedContent = ''
 
-    eventSource.onmessage = (event) => {
-      const data = event.data
+    eventSource.addEventListener('content', (event) => {
+          const data = event.data
+          console.log(data)
+          // 累加内容
+          accumulatedContent += data
+          chatMessages.value[assistantMessageIndex].content += data
 
-      // 检查是否是结束标记
-      if (data === '[DONE]') {
-        eventSource.close()
-        isStreaming.value = false
-
-        // 移除加载状态
-        if (chatMessages.value[assistantMessageIndex]) {
-          chatMessages.value[assistantMessageIndex].isLoading = false
+          scrollToBottom()
         }
-        return
+    )
+
+    eventSource.addEventListener('close', (e) => {
+      console.log("close", e)
+      eventSource.close()
+      isStreaming.value = false
+      // 移除加载状态
+      if (chatMessages.value[assistantMessageIndex]) {
+        chatMessages.value[assistantMessageIndex].isLoading = false
       }
+    })
 
-      console.log(data)
-
-      // 累加内容
-      accumulatedContent += data
-      chatMessages.value[assistantMessageIndex].content += data
-
-      scrollToBottom()
-    }
-
-    eventSource.onerror = (e: Event) => {
+    eventSource.onerror = (e: any) => {
       console.log(e)
       eventSource.close()
       isStreaming.value = false
 
       // 如果内容为空，显示错误提示
       if (!accumulatedContent) {
-        chatMessages.value[assistantMessageIndex].content += '抱歉，获取回复失败，请稍后再试。\n'
+        let msg = '抱歉，获取回复失败，请稍后再试。\n'
+        if (e.data) {
+          msg = e.data
+          message.error(msg)
+        }
+        chatMessages.value[assistantMessageIndex].content += msg
       }
       if (chatMessages.value[assistantMessageIndex]) {
         chatMessages.value[assistantMessageIndex].isLoading = false

@@ -29,7 +29,7 @@ export const modelApi = {
 
     // 更新 AI 模型
     update(data: any): Promise<ApiResponse<any>> {
-        return request.put('/ai/model/update', data)
+        return request.put('/ai/model', data)
     },
 
     // 删除 AI 模型

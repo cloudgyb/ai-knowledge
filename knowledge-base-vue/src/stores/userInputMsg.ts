@@ -4,6 +4,7 @@ import {ref} from 'vue'
 export const useInputMsgStore = defineStore('userInputMsg', () => {
     const inputMsg = ref<string>('')
     const kbId = ref<number>(NaN)
+    const aiModelId = ref<number>(NaN)
 
     function setInputMsg(msg: string) {
         inputMsg.value = msg
@@ -18,11 +19,17 @@ export const useInputMsgStore = defineStore('userInputMsg', () => {
         kbId.value = id
     }
 
+    function setAiModelId(id: number) {
+        aiModelId.value = id
+    }
+
     return {
         inputMsg,
         kbId,
+        aiModelId,
         setKbId,
         setInputMsg,
+        setAiModelId,
         clear
     }
 })

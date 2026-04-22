@@ -32,14 +32,17 @@ public class AiModelService extends ServiceImpl<AiModelMapper, AiModel> {
     private final AiModelConfigService aiModelConfigService;
     private final SysAiModelProviderService sysAiModelProviderService;
     private final KnowledgeBaseService knowledgeBaseService;
+    private final  AiChatModelFactory aiChatModelFactory;
 
 
     public AiModelService(AiModelConfigService aiModelConfigService,
                           SysAiModelProviderService sysAiModelProviderService,
-                          KnowledgeBaseService knowledgeBaseService) {
+                          KnowledgeBaseService knowledgeBaseService,
+                          AiChatModelFactory aiChatModelFactory) {
         this.aiModelConfigService = aiModelConfigService;
         this.sysAiModelProviderService = sysAiModelProviderService;
         this.knowledgeBaseService = knowledgeBaseService;
+        this.aiChatModelFactory = aiChatModelFactory;
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -149,6 +152,8 @@ public class AiModelService extends ServiceImpl<AiModelMapper, AiModel> {
         boolean update = aiModelConfigService.updateById(modelConfig);
         if (!update) {
             throw new BusinessException("更新AI模型配置失败");
+        } else {
+            aiChatModelFactory.removeCacheByAiModelId(dto.getId());
         }
     }
 }

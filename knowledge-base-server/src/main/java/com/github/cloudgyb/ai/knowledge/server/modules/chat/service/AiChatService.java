@@ -1,7 +1,9 @@
 package com.github.cloudgyb.ai.knowledge.server.modules.chat.service;
 
 import com.github.cloudgyb.ai.knowledge.server.modules.ai.domain.AiModel;
+import com.github.cloudgyb.ai.knowledge.server.modules.ai.service.AiChatModelFactory;
 import com.github.cloudgyb.ai.knowledge.server.modules.ai.service.AiModelService;
+import com.github.cloudgyb.ai.knowledge.server.modules.chat.ChatSSEEvents;
 import com.github.cloudgyb.ai.knowledge.server.modules.chat.ConversationStatus;
 import com.github.cloudgyb.ai.knowledge.server.modules.chat.domain.*;
 import com.github.cloudgyb.ai.knowledge.server.modules.commons.BusinessException;
@@ -10,8 +12,8 @@ import com.github.cloudgyb.ai.knowledge.server.modules.kb.service.KnowledgeBaseD
 import com.github.cloudgyb.ai.knowledge.server.modules.kb.service.KnowledgeBaseService;
 import com.github.cloudgyb.ai.knowledge.server.modules.rag.EmbeddingModelFactory;
 import com.github.cloudgyb.ai.knowledge.server.modules.rag.EmbeddingStoreFactory;
-import dev.langchain4j.community.model.dashscope.QwenStreamingChatModel;
 import dev.langchain4j.data.segment.TextSegment;
+import dev.langchain4j.model.chat.StreamingChatModel;
 import dev.langchain4j.model.embedding.EmbeddingModel;
 import dev.langchain4j.model.output.TokenUsage;
 import dev.langchain4j.rag.content.retriever.EmbeddingStoreContentRetriever;
@@ -45,6 +47,7 @@ public class AiChatService {
     private final EmbeddingStoreFactory embeddingStoreFactory;
     private final ChatConversationService chatConversationService;
     private final ChatMessageService chatMessageService;
+    private final AiChatModelFactory aiChatModelFactory;
 
     public AiChatService(ThreadPoolTaskExecutor threadPoolTaskExecutor,
                          AiModelService aiModelService,
@@ -53,7 +56,8 @@ public class AiChatService {
                          EmbeddingModelFactory embeddingModelFactory,
                          EmbeddingStoreFactory embeddingStoreFactory,
                          ChatConversationService chatConversationService,
-                         ChatMessageService chatMessageService) {
+                         ChatMessageService chatMessageService,
+                         AiChatModelFactory aiChatModelFactory) {
         this.threadPoolTaskExecutor = threadPoolTaskExecutor;
         this.aiModelService = aiModelService;
         this.knowledgeBaseService = knowledgeBaseService;
@@ -62,9 +66,10 @@ public class AiChatService {
         this.embeddingStoreFactory = embeddingStoreFactory;
         this.chatConversationService = chatConversationService;
         this.chatMessageService = chatMessageService;
+        this.aiChatModelFactory = aiChatModelFactory;
     }
 
-    public SseEmitter chat(Long cid, String text, Integer kbId) {
+    public SseEmitter chat(Long cid, String text, Integer kbId, Integer modelId) {
         ChatConversation chatConversation = chatConversationService.getById(cid);
         if (chatConversation == null) {
             throw new BusinessException("对话不存在！");
@@ -80,8 +85,9 @@ public class AiChatService {
         sseEmitter.onError(throwable -> System.out.println("连接错误"));
         threadPoolTaskExecutor.execute(() -> {
             try {
-                doChat(sseEmitter, cid, text, kbId);
+                doChat(sseEmitter, cid, text, kbId, modelId);
             } catch (Exception e) {
+                log.error("对话错误", e);
                 sseEmitter.complete();
                 chatConversationService.updateConversationStatus(cid, ConversationStatus.FAILED, null, new Date());
             }
@@ -90,7 +96,7 @@ public class AiChatService {
         return sseEmitter;
     }
 
-    private void doChat(SseEmitter sseEmitter, Long cid, String text, Integer kbId) throws IOException {
+    private void doChat(SseEmitter sseEmitter, Long cid, String text, Integer kbId, Integer modelId) throws IOException {
         KnowledgeBase knowledgeBase;
         EmbeddingModel embeddingModel;
         EmbeddingStore<TextSegment> embeddingStore;
@@ -98,13 +104,13 @@ public class AiChatService {
         if (kbId != null) {
             knowledgeBase = knowledgeBaseService.getById(kbId);
             if (knowledgeBase == null) {
-                sseEmitter.send("知识库不存在！");
+                sseEmitter.send(ChatSSEEvents.error("知识库不存在！"));
                 return;
             }
             Integer aiVectorModelId = knowledgeBase.getAiVectorModelId();
             AiModel aiVectorModel = aiModelService.getById(aiVectorModelId);
             if (aiVectorModel == null) {
-                sseEmitter.send("啊哦！当前知识库使用的的向量模型不存在！");
+                sseEmitter.send(ChatSSEEvents.error("啊哦！当前知识库使用的的向量模型不存在！"));
                 return;
             }
             List<Integer> docIds = knowledgeBaseDocService.listIdsByKbId(knowledgeBase.getId());
@@ -119,11 +125,13 @@ public class AiChatService {
                     .filter(MetadataFilterBuilder.metadataKey("docId").isIn(docIds))
                     .build();
         }
-        QwenStreamingChatModel streamingChatModel = QwenStreamingChatModel.builder()
-                .modelName("qwen-max")
-                .apiKey("sk-14503a670fd54e7e846bc067b77cb025")
-                .isMultimodalModel(false)
-                .build();
+        AiModel aiModel = aiModelService.getById(modelId);
+        if (aiModel == null) {
+            sseEmitter.send(ChatSSEEvents.error("请选择正确的模型！"));
+            return;
+        }
+        // 创建流式聊天模型
+        StreamingChatModel streamingChatModel = aiChatModelFactory.createStreamingChatModel(aiModel);
 
         AiServices<Assistant> aiServicesBuilder = AiServices
                 .builder(Assistant.class)
@@ -147,7 +155,7 @@ public class AiChatService {
             String thinking = partialThinking.text();
             log.info("partial thinking: {}", partialThinking);
             try {
-                sseEmitter.send(SseEmitter.event().name("thinking").data(thinking).build());
+                sseEmitter.send(ChatSSEEvents.thinking(thinking).build());
                 chatMessageService.appendThinkingMessage(tmId, thinking);
             } catch (IOException e) {
                 throw new RuntimeException(e);
@@ -156,7 +164,7 @@ public class AiChatService {
         stream.onPartialResponse(content -> {
             log.info("partial response: {}", content);
             try {
-                sseEmitter.send(SseEmitter.event().data(content).build());
+                sseEmitter.send(ChatSSEEvents.content(content).build());
                 chatMessageService.appendContentMessage(cmId, content);
             } catch (IOException e) {
                 sseEmitter.complete();
@@ -167,13 +175,18 @@ public class AiChatService {
         stream.onError(throwable -> {
             try {
                 log.error("error: ", throwable);
-                sseEmitter.send(SseEmitter.event().data("啊哦！聊天发生错误！").build());
+                sseEmitter.send(ChatSSEEvents.error("啊哦！聊天发生错误！"));
             } catch (IOException e) {
                 sseEmitter.complete();
                 throw new RuntimeException(e);
             }
         });
         stream.onCompleteResponse(chatResponse -> {
+            try {
+                sseEmitter.send(ChatSSEEvents.close("[DONE]").build());
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
             sseEmitter.complete();
             TokenUsage tokenUsage = chatResponse.tokenUsage();
             log.info("tokenUsage: {}", tokenUsage);

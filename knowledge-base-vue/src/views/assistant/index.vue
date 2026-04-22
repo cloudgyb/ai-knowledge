@@ -76,6 +76,9 @@ import type {Conversation} from "@/api/model/chatTypes";
 import {useRouter, useRoute} from "vue-router";
 import {chatApi} from "@/api/chat";
 import AiModelSelect from "@/components/ai/AiModelSelect.vue";
+import {useInputMsgStore} from "@/stores/userInputMsg";
+
+const inputMsgStore = useInputMsgStore()
 
 const router = useRouter()
 const route = useRoute()
@@ -101,9 +104,6 @@ const selectedKeys = ref<any[]>([]);
  * 对话侧边栏列表-选中当前对话
  */
 function selectConversation() {
-  /*if (conversationList.value.length > 0) {
-    selectedKeys.value = [conversationList.value[0].id]
-  }*/
   let path = route.path;
   if (path.startsWith('/assistant/chat/')) {
     const cid = route.params.cid + ''
@@ -158,6 +158,7 @@ const handleRenameConversation = async (conversation: Conversation) => {
 }
 const handleAiModelSelect = (value: number) => {
   console.log('handleAiModelSelect', value)
+  inputMsgStore.setAiModelId(value)
 }
 const selectKeys = (key: string) => {
   debugger

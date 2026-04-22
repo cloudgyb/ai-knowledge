@@ -29,7 +29,11 @@ const loadAiModels = async () => {
   if (res.code === '200') {
     options.value = res.data.records
     if (options.value.length > 0) {
-      selectedAiId.value = options.value[0].id
+      let value = options.value[0].id;
+      selectedAiId.value = value
+      if (value) {
+        handleChange(value)
+      }
     }
   }
 }

@@ -49,7 +49,7 @@ public class AiModelConfig {
      * 最大回复的token数
      */
     @TableField(value = "tokens")
-    private Integer tokens = 1024;
+    private Integer tokens = 10240;
 
     /**
      * 等待AI响应的最长时间，单位为秒。
