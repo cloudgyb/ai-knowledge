@@ -118,6 +118,9 @@ public class AiChatModelFactory {
     }
 
     private StreamingChatModel createTongyiAIStreamingChatModel(AiModel aiModel, AiModelConfig aiModelConfig) {
+        String modelName = aiModel.getModelName();
+        boolean isMultimodalModel = modelName.toLowerCase().contains("-plus") || modelName.contains("-vl") ||
+                modelName.contains("-audio");
         return QwenStreamingChatModel.builder()
                 .baseUrl(aiModel.getModelUrl())
                 .apiKey(aiModel.getModelApiKey())
@@ -125,7 +128,7 @@ public class AiChatModelFactory {
                 .topP(aiModelConfig.getTalk())
                 .maxTokens(aiModelConfig.getTokens())
                 .temperature(aiModelConfig.getTemperature().floatValue())
-                .isMultimodalModel(false)
+                .isMultimodalModel(isMultimodalModel)
                 .build();
     }
 
