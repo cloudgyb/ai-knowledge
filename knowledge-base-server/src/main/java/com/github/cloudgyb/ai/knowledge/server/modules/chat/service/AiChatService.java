@@ -13,6 +13,7 @@ import com.github.cloudgyb.ai.knowledge.server.modules.kb.service.KnowledgeBaseS
 import com.github.cloudgyb.ai.knowledge.server.modules.rag.EmbeddingModelFactory;
 import com.github.cloudgyb.ai.knowledge.server.modules.rag.EmbeddingStoreFactory;
 import dev.langchain4j.data.segment.TextSegment;
+import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.chat.StreamingChatModel;
 import dev.langchain4j.model.embedding.EmbeddingModel;
 import dev.langchain4j.model.output.TokenUsage;
@@ -22,6 +23,7 @@ import dev.langchain4j.service.TokenStream;
 import dev.langchain4j.store.embedding.EmbeddingStore;
 import dev.langchain4j.store.embedding.filter.MetadataFilterBuilder;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.time.DateFormatUtils;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
@@ -48,6 +50,7 @@ public class AiChatService {
     private final ChatConversationService chatConversationService;
     private final ChatMessageService chatMessageService;
     private final AiChatModelFactory aiChatModelFactory;
+    private final ChatConversationTitleGenerator chatConversationTitleGenerator;
 
     public AiChatService(ThreadPoolTaskExecutor threadPoolTaskExecutor,
                          AiModelService aiModelService,
@@ -57,7 +60,8 @@ public class AiChatService {
                          EmbeddingStoreFactory embeddingStoreFactory,
                          ChatConversationService chatConversationService,
                          ChatMessageService chatMessageService,
-                         AiChatModelFactory aiChatModelFactory) {
+                         AiChatModelFactory aiChatModelFactory,
+                         ChatConversationTitleGenerator chatConversationTitleGenerator) {
         this.threadPoolTaskExecutor = threadPoolTaskExecutor;
         this.aiModelService = aiModelService;
         this.knowledgeBaseService = knowledgeBaseService;
@@ -67,6 +71,7 @@ public class AiChatService {
         this.chatConversationService = chatConversationService;
         this.chatMessageService = chatMessageService;
         this.aiChatModelFactory = aiChatModelFactory;
+        this.chatConversationTitleGenerator = chatConversationTitleGenerator;
     }
 
     public SseEmitter chat(Long cid, String text, Integer kbId, Integer modelId) {
@@ -77,12 +82,34 @@ public class AiChatService {
         if (chatConversation.getCurrentStatus() == ConversationStatus.ACTIVE) {
             throw new BusinessException("对话正在进行中！");
         }
-        chatConversationService.updateConversationStatus(cid, ConversationStatus.ACTIVE,
-                text.length() < 20 ? text : null, new Date());
+
         SseEmitter sseEmitter = new SseEmitter(0L);
         sseEmitter.onCompletion(() -> System.out.println("连接完成"));
         sseEmitter.onTimeout(() -> System.out.println("连接超时"));
         sseEmitter.onError(throwable -> System.out.println("连接错误"));
+        // 更新对话状态
+        Date lastActiveTime = new Date();
+        chatConversationService.updateConversationStatus(cid, ConversationStatus.ACTIVE, null, lastActiveTime);
+        try {
+            sseEmitter.send(ChatSSEEvents.lastActiveTime(DateFormatUtils.format(lastActiveTime, "yyyy-MM-dd HH:mm:ss")));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        // 异步为新对话生成标题
+        if (chatConversation.getCurrentStatus().equals(ConversationStatus.NEW)) {
+            threadPoolTaskExecutor.execute(() -> {
+                AiModel aiModel = aiModelService.getById(modelId);
+                ChatModel chatModel = aiChatModelFactory.createChatModel(aiModel);
+                String title = chatConversationTitleGenerator.generateTitle(chatModel, text);
+                chatConversationService.updateConversationStatus(cid, null, title, null);
+                try {
+                    sseEmitter.send(ChatSSEEvents.title(title));
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            });
+        }
+        // 异步生成回复
         threadPoolTaskExecutor.execute(() -> {
             try {
                 doChat(sseEmitter, cid, text, kbId, modelId);

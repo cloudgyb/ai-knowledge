@@ -1,10 +1,7 @@
 package com.github.cloudgyb.ai.knowledge.server.modules.chat;
 
 import lombok.Getter;
-import org.springframework.web.servlet.mvc.method.annotation.ResponseBodyEmitter;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
-
-import java.util.Set;
 
 /**
  * SSE 事件类型枚举
@@ -17,7 +14,9 @@ public enum ChatSSEEvents {
     THINKING("thinking"),
     CONTENT("content"),
     ERROR("error"),
-    CLOSE("close");
+    CLOSE("close"),
+    TITLE("title"),
+    LAST_ACTIVE_TIME("lastActiveTime");
     private final String eventName;
 
     ChatSSEEvents(String eventName) {
@@ -38,5 +37,13 @@ public enum ChatSSEEvents {
 
     public static SseEmitter.SseEventBuilder close(String data) {
         return SseEmitter.event().name(CLOSE.eventName).data(data);
+    }
+
+    public static SseEmitter.SseEventBuilder title(String data) {
+        return SseEmitter.event().name(TITLE.eventName).data(data);
+    }
+
+    public static SseEmitter.SseEventBuilder lastActiveTime(String data) {
+        return SseEmitter.event().name(LAST_ACTIVE_TIME.eventName).data(data);
     }
 }

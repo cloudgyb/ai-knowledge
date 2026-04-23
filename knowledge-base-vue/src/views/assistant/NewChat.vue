@@ -104,7 +104,7 @@ const handleSendMessage = async () => {
     isSending.value = true
     // 调用后端接口创建新的对话
     const res = await chatApi.addConversation({
-      title: title
+      //title: title
     })
     let cid;
     if (res.code === '200') {

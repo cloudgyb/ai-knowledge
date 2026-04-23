@@ -216,6 +216,16 @@ const handleSendMessage = async () => {
       }
     })
 
+    eventSource.addEventListener('title', (e) => {
+      console.log("title", e)
+      loadConversations()
+    })
+
+    eventSource.addEventListener('lastActiveTime', (e) => {
+      console.log("lastActiveTime", e)
+      loadConversations()
+    })
+
     eventSource.onerror = (e: any) => {
       console.log(e)
       eventSource.close()

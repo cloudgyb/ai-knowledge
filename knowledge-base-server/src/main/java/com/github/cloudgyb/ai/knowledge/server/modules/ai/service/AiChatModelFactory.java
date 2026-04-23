@@ -219,6 +219,9 @@ public class AiChatModelFactory {
     }
 
     private ChatModel createTongyiAIChatModel(AiModel aiModel, AiModelConfig aiModelConfig) {
+        String modelName = aiModel.getModelName();
+        boolean isMultimodalModel = modelName.toLowerCase().contains("-plus") || modelName.contains("-vl") ||
+                modelName.contains("-audio");
         return QwenChatModel.builder()
                 .baseUrl(aiModel.getModelUrl())
                 .apiKey(aiModel.getModelApiKey())
@@ -226,7 +229,7 @@ public class AiChatModelFactory {
                 .topP(aiModelConfig.getTalk())
                 .maxTokens(aiModelConfig.getTokens())
                 .temperature(aiModelConfig.getTemperature().floatValue())
-                .isMultimodalModel(false)
+                .isMultimodalModel(isMultimodalModel)
                 .build();
     }
 
