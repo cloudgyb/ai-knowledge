@@ -179,7 +179,7 @@ const handleSendMessage = async () => {
           console.log(data)
           // 累加内容
           accumulatedContent += data
-          chatMessages.value[assistantMessageIndex].content += data
+          chatMessages.value[assistantMessageIndex].content = accumulatedContent
 
           scrollToBottom()
         }
