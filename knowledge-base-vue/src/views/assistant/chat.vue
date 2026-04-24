@@ -173,14 +173,14 @@ const handleSendMessage = async () => {
     const eventSource = new EventSource(`/api/ai/chat/connect?${params.toString()}`)
 
     let accumulatedContent = ''
-
     eventSource.addEventListener('content', (event) => {
-          const data = event.data
-          console.log(data)
+          let data = event.data
           // 累加内容
           accumulatedContent += data
-          chatMessages.value[assistantMessageIndex].content = accumulatedContent
-
+          let split = data.split('');
+          for (let i = 0; i < split.length; i++) {
+            chatMessages.value[assistantMessageIndex].content += split[i]
+          }
           scrollToBottom()
         }
     )
@@ -191,6 +191,7 @@ const handleSendMessage = async () => {
       isStreaming.value = false
       // 移除加载状态
       if (chatMessages.value[assistantMessageIndex]) {
+        chatMessages.value[assistantMessageIndex].content = accumulatedContent
         chatMessages.value[assistantMessageIndex].isLoading = false
       }
     })
