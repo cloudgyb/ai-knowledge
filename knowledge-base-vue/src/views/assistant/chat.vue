@@ -4,31 +4,14 @@
     <a-card :bordered="false" class="chat-card">
       <!-- 聊天记录 -->
       <div ref="chatMessagesRef" class="chat-messages">
-        <div
-            v-for="(message, index) in chatMessages"
-            :key="index"
-            :class="['message', message.role]"
-        >
-          <div class="message-avatar">
-            <a-avatar v-if="message.role === 'user'" style="background-color: #1890ff">
-              <UserOutlined/>
-            </a-avatar>
-            <a-avatar v-else style="background-color: #52c41a">
-              <RobotOutlined/>
-            </a-avatar>
-            <div v-if="message.isLoading" class="message assistant streaming">
-              <div class="message-content">
-                <div class="message-bubble">
-                  <a-spin :indicator="loadingIndicator"/>
-                  <span style="margin-left: 8px">思考中...</span>
-                </div>
-              </div>
-            </div>
-          </div>
+        <div v-for="(message, index) in chatMessages" :key="index" :class="['message', message.role]">
           <div class="message-content">
             <div class="message-bubble">
               <article class="vue-markdown-wrapper">
-                <MarkdownRenderer :source="message.content" :theme="'light'"/>
+                <div v-if="message.role === 'user'" style="padding: 5px 5px">
+                  <pre style="margin: 0">{{ message.content }}</pre>
+                </div>
+                <Markdown v-else :content="message.content" :isStreaming="message.isLoading"/>
               </article>
             </div>
           </div>
@@ -72,16 +55,14 @@
 <script setup lang="ts">
 import {ref, onMounted, nextTick, watch, inject, type Ref} from 'vue'
 import {message, type SelectProps} from 'ant-design-vue'
-import {UserOutlined, RobotOutlined, SendOutlined, LoadingOutlined} from '@ant-design/icons-vue'
+import {SendOutlined} from '@ant-design/icons-vue'
 import {knowledgeBaseApi} from '@/api/knowledgeBase'
 import {chatApi} from '@/api/chat'
 import type {KnowledgeBase} from '@/api/knowledgeBase'
-import {h} from 'vue'
 import {useRoute} from "vue-router";
 import {useInputMsgStore} from "@/stores/userInputMsg";
-import {MarkdownRenderer} from "@/components/markdown/MarkdownRenderer";
-import "@/assets/markdown-render.css"
-//import '@/style.css'
+import Markdown from '@/components/markdown/Markdown/index.vue'
+import '@/assets/styles/markdown.css'
 
 const inputMsgStore = useInputMsgStore()
 
@@ -95,8 +76,6 @@ watch(() => route.params.cid, (cid, preCid) => {
   console.log("上一个对话id：" + preCid)
   init()
 })
-// 加载图标
-const loadingIndicator = () => h(LoadingOutlined, {spin: true})
 // 知识库列表
 const knowledgeBaseList = ref<KnowledgeBase[]>([])
 // 选择的知识库列表
@@ -307,7 +286,7 @@ onMounted(() => {
 .assistant-page {
   margin: 0 auto;
   padding: 0;
-  width: 800px;
+  width: 900px;
   height: calc(100vh - 128px);
 }
 
@@ -339,21 +318,8 @@ onMounted(() => {
   justify-content: flex-start;
 }
 
-.message-avatar {
-  flex-shrink: 0;
-  margin: 0 8px;
-}
-
-.message.user .message-avatar {
-  order: 2;
-}
-
-.message.assistant .message-avatar {
-  order: 1;
-}
-
 .message-content {
-  max-width: 70%;
+  max-width: 100%;
   order: 1;
 }
 
@@ -372,8 +338,9 @@ onMounted(() => {
 }
 
 .message.user .message-bubble {
-  background: #1890ff;
-  color: #fff;
+  background: #f5f5f5;
+  font-size: 1rem;
+  color: rgba(0, 0, 0, 0.85);
 }
 
 .message.assistant .message-bubble {

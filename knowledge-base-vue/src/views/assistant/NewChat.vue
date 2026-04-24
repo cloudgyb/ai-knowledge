@@ -99,12 +99,9 @@ const handleSendMessage = async () => {
   }
 
   try {
-    let title = conversationAddForm.value.text.trim()
-    title = title.length > 20 ? '' : title
     isSending.value = true
     // 调用后端接口创建新的对话
     const res = await chatApi.addConversation({
-      //title: title
     })
     let cid;
     if (res.code === '200') {
