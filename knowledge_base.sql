@@ -45,6 +45,8 @@ INSERT INTO `ai_model` VALUES (1, '系统内嵌模型', 'AllMiniLmL6V2', 'VECTOR
 INSERT INTO `ai_model` VALUES (2, 'Cluade 聊天模型', 'claude-3-5-sonnet-20241022', 'LANG', 'https://api.anthropic.com/v1', 'eeqwewqe', '', 1, 2, 1, '2026-03-13 16:31:18', NULL, 0);
 INSERT INTO `ai_model` VALUES (3, 'DeepSeek 聊天模型', 'deepseek-chat', 'LANG', 'https://api.deepseek.com/v1', 'ddsadsa', '', 1, 3, 1, '2026-03-13 16:36:46', NULL, 0);
 INSERT INTO `ai_model` VALUES (4, '通义千问向量模型', 'text-embedding-v2', 'VECTOR', 'https://dashscope.aliyuncs.com/api/v1/services/', 'fdsfdsfsd', '', 1, 5, 1, '2026-03-14 11:26:13', NULL, 0);
+INSERT INTO `ai_model` VALUES (5, '千问 qwen3.5-plus', 'qwen3.5-plus', 'LANG', 'https://dashscope.aliyuncs.com/api/v1/services/', 'sk-*************', '', 1, 5, 1, '2026-04-22 16:54:20', '2026-04-22 17:05:49', 0);
+INSERT INTO `ai_model` VALUES (6, '千问 qwen3.6-plus', 'qwen3.6-plus', 'LANG', 'https://dashscope.aliyuncs.com/api/v1/services/', 'sk-**************', '', 1, 5, 1, '2026-04-22 17:20:37', NULL, 0);
 
 -- ----------------------------
 -- Table structure for ai_model_config
@@ -71,6 +73,8 @@ INSERT INTO `ai_model_config` VALUES (1, 1, 0.7, 0.5, 0.5, 0.5, 1024, 10, '2026-
 INSERT INTO `ai_model_config` VALUES (2, 2, 0.7, 0.5, 0.5, 0.5, 1024, 10, '2026-03-13 16:31:19', NULL);
 INSERT INTO `ai_model_config` VALUES (3, 3, 0.7, 0.5, 0.5, 0.5, 1024, 10, '2026-03-13 16:36:46', NULL);
 INSERT INTO `ai_model_config` VALUES (4, 4, 0.7, 0.5, 0.5, 0.5, 1024, 10, '2026-03-14 11:26:13', NULL);
+INSERT INTO `ai_model_config` VALUES (5, 5, 0.7, 0.5, 0.5, 0.5, 10240, 10, '2026-03-14 11:26:13', NULL);
+INSERT INTO `ai_model_config` VALUES (6, 6, 0.7, 0.5, 0.5, 0.5, 10240, 10, '2026-03-14 11:26:13', NULL);
 
 -- ----------------------------
 -- Table structure for chat_conversation
@@ -202,6 +206,8 @@ INSERT INTO `sys_ai_model` VALUES (42, 'gpt-image-1.5', 'IMAGE', 'https://api.op
 INSERT INTO `sys_ai_model` VALUES (50, 'qwen-plus', 'LANG', 'https://dashscope.aliyuncs.com/api/v1/services/', 5, '2026-02-28 10:27:05', NULL, 0);
 INSERT INTO `sys_ai_model` VALUES (51, 'text-embedding-v2', 'VECTOR', 'https://dashscope.aliyuncs.com/api/v1/services/', 5, '2026-02-28 10:27:21', NULL, 0);
 INSERT INTO `sys_ai_model` VALUES (52, 'wan2.2-t2i-plus', 'IMAGE', 'https://dashscope.aliyuncs.com/api/v1/services/', 5, '2026-02-28 10:27:43', NULL, 0);
+INSERT INTO `sys_ai_model` VALUES (53, 'qwen3.5-plus', 'LANG', 'https://dashscope.aliyuncs.com/api/v1/services/', 5, '2026-02-28 10:27:05', NULL, 0);
+INSERT INTO `sys_ai_model` VALUES (54, 'qwen3.6-plus', 'LANG', 'https://dashscope.aliyuncs.com/api/v1/services/', 5, '2026-02-28 10:27:05', NULL, 0);
 INSERT INTO `sys_ai_model` VALUES (60, 'Yi-34B-Chat', 'LANG', 'https://aip.baidubce.com', 6, '2026-02-28 10:45:14', NULL, 0);
 INSERT INTO `sys_ai_model` VALUES (61, 'Embedding-V1', 'VECTOR', 'https://aip.baidubce.com', 6, '2026-02-28 10:45:36', NULL, 0);
 INSERT INTO `sys_ai_model` VALUES (70, 'glm-4-flash', 'LANG', 'https://open.bigmodel.cn', 7, '2026-02-28 10:43:33', NULL, 0);
