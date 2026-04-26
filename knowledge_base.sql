@@ -92,6 +92,19 @@ CREATE TABLE `chat_conversation`  (
   INDEX `latest_conver_index`(`user_id` ASC, `last_active_time` DESC) USING BTREE
 ) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = 'AI 聊天对话信息存储表' ROW_FORMAT = Dynamic;
 
+-- ----------------------------
+-- Table structure for chat_memory
+-- ----------------------------
+DROP TABLE IF EXISTS `chat_memory`;
+CREATE TABLE `chat_memory` (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `cid` bigint NOT NULL COMMENT '对话id',
+  `message` text COMMENT 'chat message',
+  `create_time` datetime DEFAULT NULL,
+  `update_time` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  INDEX `cid_index` (`cid`)
+) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = 'AI 聊天记忆存储表';
 
 -- ----------------------------
 -- Table structure for chat_message_content

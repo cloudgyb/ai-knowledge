@@ -13,6 +13,7 @@ import com.github.cloudgyb.ai.knowledge.server.modules.kb.service.KnowledgeBaseS
 import com.github.cloudgyb.ai.knowledge.server.modules.rag.EmbeddingModelFactory;
 import com.github.cloudgyb.ai.knowledge.server.modules.rag.EmbeddingStoreFactory;
 import dev.langchain4j.data.segment.TextSegment;
+import dev.langchain4j.memory.chat.MessageWindowChatMemory;
 import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.chat.StreamingChatModel;
 import dev.langchain4j.model.embedding.EmbeddingModel;
@@ -51,6 +52,7 @@ public class AiChatService {
     private final ChatMessageService chatMessageService;
     private final AiChatModelFactory aiChatModelFactory;
     private final ChatConversationTitleGenerator chatConversationTitleGenerator;
+    private final PersistentChatMemoryStore persistentChatMemoryStore;
 
     public AiChatService(ThreadPoolTaskExecutor threadPoolTaskExecutor,
                          AiModelService aiModelService,
@@ -61,7 +63,8 @@ public class AiChatService {
                          ChatConversationService chatConversationService,
                          ChatMessageService chatMessageService,
                          AiChatModelFactory aiChatModelFactory,
-                         ChatConversationTitleGenerator chatConversationTitleGenerator) {
+                         ChatConversationTitleGenerator chatConversationTitleGenerator,
+                         PersistentChatMemoryStore persistentChatMemoryStore) {
         this.threadPoolTaskExecutor = threadPoolTaskExecutor;
         this.aiModelService = aiModelService;
         this.knowledgeBaseService = knowledgeBaseService;
@@ -72,6 +75,7 @@ public class AiChatService {
         this.chatMessageService = chatMessageService;
         this.aiChatModelFactory = aiChatModelFactory;
         this.chatConversationTitleGenerator = chatConversationTitleGenerator;
+        this.persistentChatMemoryStore = persistentChatMemoryStore;
     }
 
     public SseEmitter chat(Long cid, String text, Integer kbId, Integer modelId) {
@@ -172,6 +176,10 @@ public class AiChatService {
         }
         Assistant assistant = aiServicesBuilder
                 .systemMessage(systemMessage)
+                .chatMemory(MessageWindowChatMemory.builder()
+                        .id(cid)
+                        .maxMessages(PersistentChatMemoryStore.maxMessages)
+                        .chatMemoryStore(persistentChatMemoryStore).build())
                 .build();
         TokenStream stream = assistant.chat(text);
         List<Long> ids = initMsg(cid, text);// 插入聊天消息
