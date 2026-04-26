@@ -32,7 +32,7 @@ public class AiModelService extends ServiceImpl<AiModelMapper, AiModel> {
     private final AiModelConfigService aiModelConfigService;
     private final SysAiModelProviderService sysAiModelProviderService;
     private final KnowledgeBaseService knowledgeBaseService;
-    private final  AiChatModelFactory aiChatModelFactory;
+    private final AiChatModelFactory aiChatModelFactory;
 
 
     public AiModelService(AiModelConfigService aiModelConfigService,
@@ -80,9 +80,10 @@ public class AiModelService extends ServiceImpl<AiModelMapper, AiModel> {
     }
 
     public Page<AiModelDTO> page(@NotNull Integer pageNum, @NotNull Integer pageSize,
-                                 String name, String type) {
+                                 String name, String type, Boolean enable) {
         LambdaQueryWrapper<AiModel> like = new LambdaQueryWrapper<AiModel>()
                 .eq(StringUtils.isNotBlank(type), AiModel::getModelType, type)
+                .eq(enable != null, AiModel::getStatus, Boolean.TRUE.equals(enable) ? 1 : 0)
                 .like(StringUtils.isNotBlank(name), AiModel::getCustomName, name);
         Page<AiModel> page = page(new Page<>(pageNum, pageSize), like);
         List<AiModel> records = page.getRecords();

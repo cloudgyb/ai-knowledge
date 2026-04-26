@@ -40,8 +40,9 @@ public class AiModelController {
     @GetMapping
     public ApiResponse<Page<AiModelDTO>> page(@NotNull Integer pageNum,
                                               @NotNull Integer pageSize,
-                                              String name, String type) {
-        Page<AiModelDTO> page = aiModelService.page(pageNum, pageSize, name, type);
+                                              String name, String type,
+                                              Boolean enable) {
+        Page<AiModelDTO> page = aiModelService.page(pageNum, pageSize, name, type, enable);
         return ApiResponse.success(page);
     }
 
@@ -50,6 +51,7 @@ public class AiModelController {
         aiModelService.addAiModel(dto);
         return ApiResponse.success();
     }
+
     @PutMapping
     public ApiResponse<Void> update(@Validated(Group.Update.class) @RequestBody AiModelDTO dto) {
         aiModelService.updateAiModel(dto);

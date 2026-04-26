@@ -25,7 +25,7 @@ const handleChange = (value: number) => {
   emits('change', value)
 }
 const loadAiModels = async () => {
-  const res = await modelApi.getList({type: 'LANG', pageSize: 100, pageNum: 1})
+  const res = await modelApi.getList({type: 'LANG', pageSize: 100, pageNum: 1, enable: true})
   if (res.code === '200') {
     options.value = res.data.records
     if (options.value.length > 0) {

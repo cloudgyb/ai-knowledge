@@ -12,7 +12,8 @@ export const modelApi = {
         name?: string;
         type?: string;
         pageNum?: number;
-        pageSize?: number
+        pageSize?: number;
+        enable?: boolean;
     }): Promise<ApiResponse<ApiResponsePagination<AiModel>>> {
         return request.get('/ai/model', {params})
     },
