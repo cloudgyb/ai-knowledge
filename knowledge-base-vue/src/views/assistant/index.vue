@@ -1,7 +1,7 @@
 <template>
   <div class="assistant-page">
     <a-row class="chat-container" :gutter="2">
-      <!-- 左侧知识库选择 -->
+      <!-- 左侧对话列表 -->
       <a-col flex="260px" style="height: 100%">
         <a-card style="height: 100%">
           <template #title>
@@ -12,7 +12,7 @@
               </a-button>
             </a-flex>
           </template>
-          <div class="conversation-box">
+          <div class="conversation-box" ref="conversationBoxRef" @scroll="handleScroll">
             <a-menu v-model:selectedKeys="selectedKeys" style="width: 256px" mode="vertical" @click="handleClick">
               <a-menu-item v-for="c in conversationList" :key="c.id" :title="c.title+'-'+c.lastActiveTime">
                 {{ c.title }}
@@ -84,6 +84,14 @@ const router = useRouter()
 const route = useRoute()
 
 const conversationList = ref<Conversation[]>([])
+const conversationBoxRef = ref<HTMLElement>()
+
+// 分页相关状态
+const pageNum = ref(1)
+const pageSize = ref(20)
+const total = ref(0)
+const loading = ref(false)
+const hasMore = ref(true)
 
 const handleNewChat = () => {
   router.push('/assistant')
@@ -111,15 +119,42 @@ function selectConversation() {
   }
 }
 
-const loadConversations = async () => {
+const loadConversations = async (isLoadMore = false) => {
+  // 如果没有更多数据或正在加载中，则不继续加载
+  if (!hasMore.value || loading.value) return
+  
   try {
-    const res = await chatApi.getConversations()
+    loading.value = true
+    const currentPage = isLoadMore ? pageNum.value : 1
+    const res = await chatApi.getConversations(currentPage, pageSize.value)
     if (res.code === '200') {
-      conversationList.value = res.data.records
+      const newRecords = res.data.records || []
+      
+      if (isLoadMore) {
+        // 加载更多时追加数据
+        conversationList.value = [...conversationList.value, ...newRecords]
+      } else {
+        // 首次加载或刷新时替换数据
+        conversationList.value = newRecords
+      }
+      
+      // 更新总数和页码
+      total.value = res.data.total || 0
+      
+      // 判断是否还有更多数据
+      hasMore.value = conversationList.value.length < total.value
+      
+      // 如果成功加载，页码+1
+      if (newRecords.length > 0) {
+        pageNum.value = currentPage + 1
+      }
+      
       selectConversation()
     }
   } catch (error) {
     console.error('加载会话列表失败:', error)
+  } finally {
+    loading.value = false
   }
 }
 const handleDeleteConversation = async (id: string) => {
@@ -127,6 +162,9 @@ const handleDeleteConversation = async (id: string) => {
     const res = await chatApi.deleteConversation(id)
     if (res.code === '200') {
       message.success('删除成功')
+      // 重置分页状态
+      pageNum.value = 1
+      hasMore.value = true
       await loadConversations()
       const path = route.path;
       if (path.startsWith('/assistant/chat/')) {
@@ -160,6 +198,19 @@ const handleAiModelSelect = (value: number) => {
   console.log('handleAiModelSelect', value)
   inputMsgStore.setAiModelId(value)
 }
+// 处理滚动事件
+const handleScroll = async (e: Event) => {
+  const target = e.target as HTMLElement
+  const scrollTop = target.scrollTop
+  const scrollHeight = target.scrollHeight
+  const clientHeight = target.clientHeight
+  
+  // 当滚动到距离底部 50px 时触发加载
+  if (scrollHeight - scrollTop - clientHeight < 50) {
+    await loadConversations(true)
+  }
+}
+
 const selectKeys = (key: string) => {
   debugger
   selectedKeys.value = [key]
@@ -186,24 +237,6 @@ provide('selectKeys', selectKeys)
 
 .chat-container {
   height: 100%;
-}
-
-.sidebar {
-  height: 100%;
-  overflow-y: auto;
-}
-
-.knowledge-card {
-  height: 100%;
-}
-
-.kb-item {
-  padding: 8px 0;
-  border-bottom: 1px solid #f0f0f0;
-}
-
-.kb-item:last-child {
-  border-bottom: none;
 }
 
 .conversation-box {

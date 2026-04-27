@@ -15,8 +15,8 @@ export const chatApi = {
         })
     },
     // 获取会话列表
-    getConversations(): Promise<ApiResponse<ApiResponsePagination<Conversation>>> {
-        const params = {pageNum: 1, pageSize: 10}
+    getConversations(pageNum: number = 1, pageSize: number = 10): Promise<ApiResponse<ApiResponsePagination<Conversation>>> {
+        const params = {pageNum, pageSize}
         return request.get('/ai/chat/c', {params})
     },
     addConversation(data: any): Promise<ApiResponse<string>> {
