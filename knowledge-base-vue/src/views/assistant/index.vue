@@ -121,7 +121,7 @@ function selectConversation() {
 
 const loadConversations = async (isLoadMore = false) => {
   // 如果没有更多数据或正在加载中，则不继续加载
-  if (!hasMore.value || loading.value) return
+  if (loading.value) return
   
   try {
     loading.value = true
