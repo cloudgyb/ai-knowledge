@@ -45,5 +45,9 @@ export const modelApi = {
     // 获取系统内置的 AI 模型列表
     getSysAiModels(providerId: number): Promise<ApiResponse<SysAiModel[]>> {
         return request.get('/sys/ai/model/list', {params: {providerId}})
+    },
+    // 获取 AI 模型公钥
+    getPublicKey(): Promise<ApiResponse<string>> {
+        return request.get('/ai/model/publicKey')
     }
 }

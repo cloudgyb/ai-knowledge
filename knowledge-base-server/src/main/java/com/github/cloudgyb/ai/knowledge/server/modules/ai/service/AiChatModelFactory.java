@@ -35,13 +35,16 @@ import java.util.concurrent.ConcurrentHashMap;
 public class AiChatModelFactory {
     private final SysAiModelProviderService sysAiModelProviderService;
     private final AiModelConfigService aiModelConfigService;
+    private final AiModelTokenEncryptService aiModelTokenEncryptService;
     private final ConcurrentHashMap<Integer, ChatModel> aiModelCache = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<Integer, StreamingChatModel> aiStreamingModelCache = new ConcurrentHashMap<>();
 
     public AiChatModelFactory(SysAiModelProviderService sysAiModelProviderService,
-                              AiModelConfigService aiModelConfigService) {
+                              AiModelConfigService aiModelConfigService,
+                              AiModelTokenEncryptService aiModelTokenEncryptService) {
         this.sysAiModelProviderService = sysAiModelProviderService;
         this.aiModelConfigService = aiModelConfigService;
+        this.aiModelTokenEncryptService = aiModelTokenEncryptService;
     }
 
     public StreamingChatModel createStreamingChatModel(AiModel aiModel) {
@@ -58,11 +61,11 @@ public class AiChatModelFactory {
             throw new BusinessException("知识库AI向量模型提供商不存在！");
         }
         providerCode = aiModelProvider.getProviderCode();
-
+        decryptApiKey(aiModel);
         AiModelConfig aiModelConfig = aiModelConfigService.getByModelId(aiModel.getId());
         // 根据模型提供商创建内嵌模型
         return switch (AIModelProviders.valueOf(providerCode)) {
-            case OpenAI -> createOpenAIStreamingChatModel(aiModel, aiModelConfig);
+            case OpenAI, DeepSeek -> createOpenAIStreamingChatModel(aiModel, aiModelConfig);
             case TongYi -> createTongyiAIStreamingChatModel(aiModel, aiModelConfig);
             case ZhiPuAI -> createZhiPuAIStreamingChatModel(aiModel, aiModelConfig);
             case QianFan -> createQianFanAIStreamingChatModel(aiModel, aiModelConfig);
@@ -159,11 +162,12 @@ public class AiChatModelFactory {
             throw new BusinessException("知识库AI向量模型提供商不存在！");
         }
         providerCode = aiModelProvider.getProviderCode();
-
+        // 解密 apiKey
+        decryptApiKey(aiModel);
         AiModelConfig aiModelConfig = aiModelConfigService.getByModelId(aiModel.getId());
         // 根据模型提供商创建内嵌模型
         return switch (AIModelProviders.valueOf(providerCode)) {
-            case OpenAI -> createOpenAIChatModel(aiModel, aiModelConfig);
+            case OpenAI, DeepSeek -> createOpenAIChatModel(aiModel, aiModelConfig);
             case TongYi -> createTongyiAIChatModel(aiModel, aiModelConfig);
             case ZhiPuAI -> createZhiPuAIChatModel(aiModel, aiModelConfig);
             case QianFan -> createQianFanAIChatModel(aiModel, aiModelConfig);
@@ -172,6 +176,7 @@ public class AiChatModelFactory {
             default -> throw new BusinessException("不支持的模型提供商！");
         };
     }
+
 
     private ChatModel createClaudeAIChatModel(AiModel aiModel, AiModelConfig aiModelConfig) {
         return AnthropicChatModel.builder()
@@ -244,6 +249,13 @@ public class AiChatModelFactory {
                 .temperature(aiModelConfig.getTemperature())
                 .topP(aiModelConfig.getTalk())
                 .build();
+    }
+
+    private void decryptApiKey(AiModel aiModel) {
+        String decryptedApiKey = aiModelTokenEncryptService.decryptTokenByPrivateKey(aiModel.getModelApiKey());
+        String decryptedApiSecret = aiModelTokenEncryptService.decryptTokenByPrivateKey(aiModel.getModelApiSecret());
+        aiModel.setModelApiKey(decryptedApiKey);
+        aiModel.setModelApiSecret(decryptedApiSecret);
     }
 
     public void removeCacheByAiModelId(Integer aiModelId) {

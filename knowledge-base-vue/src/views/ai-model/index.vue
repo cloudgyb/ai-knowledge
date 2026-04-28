@@ -192,7 +192,7 @@
           <a-input v-model:value="formData.modelUrl" placeholder="请输入模型接口地址"/>
         </a-form-item>
         <a-form-item label="模型接口Key" name="modelApiKey">
-          <a-input v-model:value="formData.modelApiKey" placeholder="请输入模型接口key"/>
+          <a-input-password v-model:value="formData.modelApiKey" placeholder="请输入模型接口key"/>
         </a-form-item>
         <a-form-item label="是否启用" name="status">
           <a-radio-group v-model:value="formData.status">
@@ -219,6 +219,7 @@ import {
 import {Empty} from 'ant-design-vue';
 import {modelApi} from '@/api/model'
 import type {AiModel, AiModelProvider, AiModelSearchForm, SysAiModel} from '@/api/model/aiModelTypes'
+import {rsaEncrypt} from '@/utils/rsa'
 
 const simpleImage = Empty.PRESENTED_IMAGE_SIMPLE;
 // 模型类型 Select 下拉选项
@@ -272,7 +273,6 @@ const formRules = {
   modelApiKey: [{required: true, message: '请输入模型接口Key', trigger: 'blur'}],
   status: [{required: true, message: '请选择是否启用', trigger: 'change'}]
 }
-
 // 供应商列表
 const providers = ref<AiModelProvider[]>([])
 
@@ -461,10 +461,19 @@ const handleSubmit = async () => {
     }
 
     if (formData.value.id) {
-      //debugger
+      debugger
+      const aiModel = aiModelList.value.find(item => item.id === formData.value.id);
+      if (aiModel?.modelApiKey !== submitData.modelApiKey) { // api key 有修改，加密
+        submitData.modelApiKey = rsaEncrypt(submitData.modelApiKey + "")
+      }
+      if (aiModel?.modelApiSecret !== submitData.modelApiSecret) { // api secret 有修改，加密
+        submitData.modelApiSecret = rsaEncrypt(submitData.modelApiSecret + "")
+      }
       await modelApi.update(submitData)
       message.success('更新成功')
     } else {
+      submitData.modelApiKey = rsaEncrypt(submitData.modelApiKey + "")
+      submitData.modelApiSecret = rsaEncrypt(submitData.modelApiSecret + "")
       await modelApi.add(submitData)
       message.success('添加成功')
     }
@@ -531,11 +540,6 @@ onMounted(() => {
 
 :deep(.ant-card-body) {
   padding-bottom: 10px;
-}
-
-.card-footer {
-  margin-top: 16px;
-  text-align: center;
 }
 
 .pagination-container {

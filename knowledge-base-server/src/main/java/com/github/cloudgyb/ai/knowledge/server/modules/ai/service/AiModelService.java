@@ -33,16 +33,19 @@ public class AiModelService extends ServiceImpl<AiModelMapper, AiModel> {
     private final SysAiModelProviderService sysAiModelProviderService;
     private final KnowledgeBaseService knowledgeBaseService;
     private final AiChatModelFactory aiChatModelFactory;
+    private final AiModelTokenEncryptService aiModelTokenEncryptService;
 
 
     public AiModelService(AiModelConfigService aiModelConfigService,
                           SysAiModelProviderService sysAiModelProviderService,
                           KnowledgeBaseService knowledgeBaseService,
-                          AiChatModelFactory aiChatModelFactory) {
+                          AiChatModelFactory aiChatModelFactory,
+                          AiModelTokenEncryptService aiModelTokenEncryptService) {
         this.aiModelConfigService = aiModelConfigService;
         this.sysAiModelProviderService = sysAiModelProviderService;
         this.knowledgeBaseService = knowledgeBaseService;
         this.aiChatModelFactory = aiChatModelFactory;
+        this.aiModelTokenEncryptService = aiModelTokenEncryptService;
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -57,13 +60,23 @@ public class AiModelService extends ServiceImpl<AiModelMapper, AiModel> {
         if (one != null) {
             throw new BusinessException("模型名称已存在");
         }
+        String modelApiKey = dto.getModelApiKey();
+        String modelApiSecret = dto.getModelApiSecret();
+        try {
+            aiModelTokenEncryptService.decryptTokenByPrivateKey(modelApiKey);
+            if (StringUtils.isNotBlank(modelApiSecret)) {
+                aiModelTokenEncryptService.decryptTokenByPrivateKey(modelApiSecret);
+            }
+        } catch (Exception e) {
+            throw new BusinessException("模型密钥解密失败");
+        }
         AiModel aiModel = new AiModel();
         aiModel.setCustomName(dto.getCustomName());
         aiModel.setModelName(dto.getModelName());
         aiModel.setModelType(dto.getModelType().name());
         aiModel.setModelUrl(dto.getModelUrl());
-        aiModel.setModelApiKey(dto.getModelApiKey());
-        aiModel.setModelApiSecret(dto.getModelApiSecret());
+        aiModel.setModelApiKey(modelApiKey);
+        aiModel.setModelApiSecret(modelApiSecret);
         aiModel.setProviderId(providerId);
         aiModel.setStatus(dto.getStatus());
         aiModel.setCreateUserId(1L);
@@ -119,6 +132,7 @@ public class AiModelService extends ServiceImpl<AiModelMapper, AiModel> {
         if (!remove) {
             throw new BusinessException("删除模型失败");
         }
+        aiChatModelFactory.removeCacheByAiModelId(id);
         boolean b = aiModelConfigService.removeByModelId(id);
         if (!b) {
             throw new BusinessException("删除模型配置失败");
@@ -136,6 +150,16 @@ public class AiModelService extends ServiceImpl<AiModelMapper, AiModel> {
         boolean exists = knowledgeBaseService.exists(queryWrapper);
         if (exists && !aiModel.getModelType().equals(dto.getModelType().name())) {
             throw new BusinessException("模型正在被使用，无法修改模型类型！");
+        }
+        String modelApiKey = dto.getModelApiKey();
+        String modelApiSecret = dto.getModelApiSecret();
+        try {
+            aiModelTokenEncryptService.decryptTokenByPrivateKey(modelApiKey);
+            if (StringUtils.isNotBlank(modelApiSecret)) {
+                aiModelTokenEncryptService.decryptTokenByPrivateKey(modelApiSecret);
+            }
+        } catch (Exception e) {
+            throw new BusinessException("模型密钥解密失败");
         }
         BeanUtils.copyProperties(dto, aiModel);
         aiModel.setId(dto.getId());

@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.github.cloudgyb.ai.knowledge.server.modules.ai.AiModelType;
 import com.github.cloudgyb.ai.knowledge.server.modules.ai.dto.AiModelDTO;
 import com.github.cloudgyb.ai.knowledge.server.modules.ai.service.AiModelService;
+import com.github.cloudgyb.ai.knowledge.server.modules.ai.service.AiModelTokenEncryptService;
 import com.github.cloudgyb.ai.knowledge.server.modules.commons.ApiResponse;
 import com.github.cloudgyb.ai.knowledge.server.modules.commons.dto.AntDesignSelectOption;
 import com.github.cloudgyb.ai.knowledge.server.modules.commons.validation.Group;
@@ -22,9 +23,12 @@ import org.springframework.web.bind.annotation.*;
 @Validated
 public class AiModelController {
     private final AiModelService aiModelService;
+    private final AiModelTokenEncryptService aiModelTokenEncryptService;
 
-    public AiModelController(AiModelService aiModelService) {
+    public AiModelController(AiModelService aiModelService,
+                             AiModelTokenEncryptService aiModelTokenEncryptService) {
         this.aiModelService = aiModelService;
+        this.aiModelTokenEncryptService = aiModelTokenEncryptService;
     }
 
     @GetMapping("/types")
@@ -63,5 +67,10 @@ public class AiModelController {
     public ApiResponse<Void> delete(@NotNull Integer id) {
         aiModelService.delete(id);
         return ApiResponse.success();
+    }
+
+    @GetMapping("/publicKey")
+    public ApiResponse<String> publicKey() {
+        return ApiResponse.success(aiModelTokenEncryptService.getPublicKey());
     }
 }
