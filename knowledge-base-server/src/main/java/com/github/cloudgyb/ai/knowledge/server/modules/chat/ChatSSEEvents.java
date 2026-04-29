@@ -24,26 +24,26 @@ public enum ChatSSEEvents {
     }
 
     public static SseEmitter.SseEventBuilder error(String data) {
-        return SseEmitter.event().name(ERROR.eventName).data(data);
+        return SseEmitter.event().name(ERROR.eventName).data(" " + data);
     }
 
     public static SseEmitter.SseEventBuilder content(String data) {
-        return SseEmitter.event().name(CONTENT.eventName).data(data);
+        return SseEmitter.event().name(CONTENT.eventName).data(" " + data);
     }
 
     public static SseEmitter.SseEventBuilder thinking(String data) {
-        return SseEmitter.event().name(THINKING.eventName).data(data);
+        return SseEmitter.event().name(THINKING.eventName).data(" " + data);
     }
 
     public static SseEmitter.SseEventBuilder close(String data) {
-        return SseEmitter.event().name(CLOSE.eventName).data(data);
+        return SseEmitter.event().name(CLOSE.eventName).data(" " + data);
     }
 
     public static SseEmitter.SseEventBuilder title(String data) {
-        return SseEmitter.event().name(TITLE.eventName).data(data);
+        return SseEmitter.event().name(TITLE.eventName).data(" " + data);
     }
 
     public static SseEmitter.SseEventBuilder lastActiveTime(String data) {
-        return SseEmitter.event().name(LAST_ACTIVE_TIME.eventName).data(data);
+        return SseEmitter.event().name(LAST_ACTIVE_TIME.eventName).data(" " + data);
     }
 }

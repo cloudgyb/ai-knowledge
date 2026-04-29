@@ -6,6 +6,7 @@ export interface WebSearchResult {
     content: string
     sourceUrl: string
 }
+
 // HTML 转义
 function escapeHtml(html: string): string {
     return html
@@ -119,7 +120,6 @@ export function replaceCodeBlockPlaceholders(
 }
 
 // ========== MarkdownRenderer 类 ==========
-
 export class MarkdownRenderer {
     private readonly md: MarkdownIt
 
@@ -155,10 +155,8 @@ export class MarkdownRenderer {
             const footnotes = this.convertToMarkdownFootnotes(additionalWebSearchResults)
             contentToRender = `${contentToRender}${footnotes}`
         }
-
         return this.md.render(contentToRender)
     }
-
     private convertToMarkdownFootnotes(results: WebSearchResult[]): string {
         if (!results?.length) return ''
 
