@@ -19,6 +19,7 @@ import dev.langchain4j.model.chat.StreamingChatModel;
 import dev.langchain4j.model.openai.OpenAiChatModel;
 import dev.langchain4j.model.openai.OpenAiStreamingChatModel;
 import jakarta.annotation.PreDestroy;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 
 import java.time.Duration;
@@ -253,9 +254,12 @@ public class AiChatModelFactory {
 
     private void decryptApiKey(AiModel aiModel) {
         String decryptedApiKey = aiModelTokenEncryptService.decryptTokenByPrivateKey(aiModel.getModelApiKey());
-        String decryptedApiSecret = aiModelTokenEncryptService.decryptTokenByPrivateKey(aiModel.getModelApiSecret());
         aiModel.setModelApiKey(decryptedApiKey);
-        aiModel.setModelApiSecret(decryptedApiSecret);
+        String modelApiSecret = aiModel.getModelApiSecret();
+        if (StringUtils.isNotBlank(modelApiSecret)) {
+            String decryptedApiSecret = aiModelTokenEncryptService.decryptTokenByPrivateKey(modelApiSecret);
+            aiModel.setModelApiSecret(decryptedApiSecret);
+        }
     }
 
     public void removeCacheByAiModelId(Integer aiModelId) {

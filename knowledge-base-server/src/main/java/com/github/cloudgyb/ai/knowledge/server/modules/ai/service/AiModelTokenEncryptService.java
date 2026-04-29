@@ -97,7 +97,7 @@ public class AiModelTokenEncryptService implements InitializingBean {
     public void afterPropertiesSet() throws Exception {
         loadKeyPair();
         if (log.isInfoEnabled()) {
-            log.info("公私钥成功！");
+            log.info("公私钥加载成功！");
         }
     }
 }
