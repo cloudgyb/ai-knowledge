@@ -19,11 +19,6 @@ interface ImportMeta {
     readonly env: ImportMetaEnv
 }
 
-
-// markdown-it plugins
-declare module 'markdown-it-footnote'
-declare module 'markdown-it-container'
-
 // htmlparser2 types
 declare module 'domhandler' {
     export interface Node {
@@ -46,3 +41,8 @@ declare module 'domhandler' {
         children?: Node[]
     }
 }
+
+interface Window {
+    copyToClipboard: (text: string) => Promise<void>
+}
+

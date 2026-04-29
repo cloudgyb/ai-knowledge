@@ -9,9 +9,14 @@
             <div class="message-bubble">
               <article class="vue-markdown-wrapper">
                 <div v-if="message.role === 'user'" style="padding: 5px 5px">
-                  <pre style="margin: 0">{{ message.content }}</pre>
+                  <pre style="margin: 0;font-weight: bold">{{ message.content }}</pre>
                 </div>
-                <Markdown v-else :content="message.content" :isStreaming="message.isLoading"/>
+                <Markdown
+                    v-else-if="!message.isLoading && message.content"
+                    :content="message.content"/>
+                <StreamMarkdown v-else-if="message.isLoading"
+                                :content="message.content"
+                                :streaming="message.isLoading"/>
               </article>
             </div>
           </div>
@@ -61,7 +66,9 @@ import {chatApi} from '@/api/chat'
 import type {KnowledgeBase} from '@/api/knowledgeBase'
 import {useRoute} from "vue-router";
 import {useInputMsgStore} from "@/stores/userInputMsg";
-import Markdown from '@/components/markdown/Markdown/index.vue'
+import Markdown from '@/components/Markdown/index.vue'
+import StreamMarkdown from '@/components/Markdown/StreamMarkdown.vue'
+import 'highlight.js/styles/github.min.css'
 import '@/assets/styles/markdown.css'
 
 const inputMsgStore = useInputMsgStore()
@@ -177,10 +184,7 @@ const handleSendMessage = async () => {
           let data = event.data
           // 累加内容
           accumulatedContent += data
-          let split = data.split('');
-          for (let i = 0; i < split.length; i++) {
-            chatMessages.value[assistantMessageIndex].content += split[i]
-          }
+          chatMessages.value[assistantMessageIndex].content += data
           scrollToBottom()
         }
     )
@@ -191,7 +195,6 @@ const handleSendMessage = async () => {
       isStreaming.value = false
       // 移除加载状态
       if (chatMessages.value[assistantMessageIndex]) {
-        chatMessages.value[assistantMessageIndex].content = accumulatedContent
         chatMessages.value[assistantMessageIndex].isLoading = false
       }
     })
@@ -375,28 +378,6 @@ onMounted(() => {
 
 .chat-messages::-webkit-scrollbar-track {
   background: transparent;
-}
-
-:deep(p) {
-  margin-bottom: 0 !important;
-  margin-block-start: 0;
-  margin-block-end: 0;
-}
-
-:deep(li) {
-  margin: 10px 0;
-}
-
-:deep(ul li) {
-  list-style: circle;
-}
-
-:deep(ol li) {
-  list-style: decimal;
-}
-
-:deep(li > ul), :deep(li > ol) {
-  margin-left: 15px;
 }
 
 </style>
