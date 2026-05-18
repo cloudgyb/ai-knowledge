@@ -1,5 +1,7 @@
 package com.github.cloudgyb.ai.knowledge.server.modules.commons;
 
+import cn.dev33.satoken.exception.NotLoginException;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -17,6 +19,12 @@ public class GlobalExceptionHandler {
     @ResponseStatus
     public ApiResponse<Void> handleException(BusinessException e) {
         return ApiResponse.error(e.getCode(), e.getMessage());
+    }
+
+    @ExceptionHandler(NotLoginException.class)
+    @ResponseStatus(code = HttpStatus.UNAUTHORIZED)
+    public ApiResponse<Void> handleException(NotLoginException e) {
+        return ApiResponse.error(HttpStatus.UNAUTHORIZED.value() + "", e.getMessage());
     }
 
     @ExceptionHandler(Exception.class)

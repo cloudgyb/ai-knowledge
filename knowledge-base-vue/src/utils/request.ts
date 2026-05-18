@@ -11,7 +11,11 @@ const request: AxiosInstance = axios.create({
 // 请求拦截器
 request.interceptors.request.use(
     (config) => {
-        // 可以在这里添加 token 等认证信息
+        // 从 localStorage 获取 token
+        const token = localStorage.getItem('token')
+        if (token) {
+            config.headers['satoken'] = token
+        }
         return config
     },
     (error) => {
@@ -32,6 +36,14 @@ request.interceptors.response.use(
         return response.data
     },
     (error: AxiosError<ApiResponse<any>>) => {
+        // 处理 401 未授权错误
+        if (error.response?.status === 401) {
+            // 清除本地 token 和用户信息
+            localStorage.removeItem('token')
+            localStorage.removeItem('userInfo')
+            // 跳转到登录页
+            window.location.href = '/login'
+        }
         return Promise.reject(new Error(error.response?.data?.message || '请求错误！'))
     }
 )

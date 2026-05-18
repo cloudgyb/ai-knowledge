@@ -7,10 +7,10 @@
           <h1 class="system-title">基于 AI RAG 的在线知识库</h1>
         </div>
         <div class="user-menu">
-          <a-dropdown>
+          <a-dropdown v-if="userStore.userInfo">
             <span class="user-info">
-              <a-avatar size="small">{{ userStore.userInfo?.username?.[0]?.toUpperCase() }}</a-avatar>
-              <span class="username">{{ userStore.userInfo?.nickname || userStore.userInfo?.username }}</span>
+              <a-avatar size="small">{{ userStore.userInfo.username?.[0]?.toUpperCase() }}</a-avatar>
+              <span class="username">{{ userStore.userInfo.nickname || userStore.userInfo.username }}</span>
               <DownOutlined/>
             </span>
             <template #overlay>
@@ -73,19 +73,17 @@ import {
   LogoutOutlined,
   DownOutlined
 } from '@ant-design/icons-vue'
+import {authApi} from '@/api/auth'
+import {message} from 'ant-design-vue'
 
 const router = useRouter()
 const userStore = useUserStore()
 const route = useRoute()
 
-// 模拟用户信息（实际项目中应该从登录接口获取）
-if (!userStore.userInfo) {
-  userStore.setUserInfo({
-    id: 1,
-    username: 'admin',
-    nickname: '管理员'
-  })
-}
+// 初始化用户信息（从 localStorage 恢复）
+onMounted(() => {
+  userStore.initUserInfo()
+})
 
 const selectedKeys = ref<string[]>(['ai-model'])
 
@@ -111,10 +109,19 @@ const handleMenuSelect = ({key}: { key: string }) => {
   router.push(`/${key}`)
 }
 
-const handleLogout = () => {
-  // 退出逻辑，可以清除用户信息等
-  console.log('退出登录')
-  // 实际项目中可以在这里调用登出接口或跳转到登录页
+const handleLogout = async () => {
+  try {
+    // 调用登出接口
+    await authApi.logout()
+    message.success('退出成功')
+  } catch (error) {
+    console.error('登出失败:', error)
+  } finally {
+    // 清除本地用户信息
+    userStore.clearUserInfo()
+    // 跳转到登录页
+    router.push('/login')
+  }
 }
 
 onMounted(() => {
