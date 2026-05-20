@@ -45,7 +45,7 @@
     <!-- 知识库列表 -->
     <a-card :bordered="false">
       <div v-if="loading"
-          style="text-align: center; position: absolute;z-index: 999;background: rgba(0,0,0,0);top: 100px;left: 50%">
+           style="text-align: center; position: absolute;z-index: 999;background: rgba(0,0,0,0);top: 100px;left: 50%">
         <a-spin/>
       </div>
       <a-empty v-if="knowledgeBaseList.length === 0 && !loading" :image="simpleImage"/>
@@ -187,7 +187,7 @@
               <a-empty v-if="docList.length === 0"/>
               <a-row :gutter="[16, 16]" style="max-height: 410px;overflow-y: auto">
                 <a-col v-for="doc in docList" :key="doc.id" :xs="24" :sm="12" :md="8" :lg="6">
-                  <a-card hoverable class="kb-card" size="small">
+                  <a-card hoverable class="kb-card" size="small" @click="handleDocEdit(doc)">
                     <template #title>
                       <a-typography-title :level="5"
                                           style="margin: 0;display:flex;align-items: center">
@@ -205,7 +205,7 @@
                             cancel-text="取消"
                             @confirm="handleDocDelete(doc.id)"
                         >
-                          <DeleteOutlined key="delete" style="color: #ff4d4f" title="删除文档"/>
+                          <DeleteOutlined key="delete" style="color: #ff4d4f" title="删除文档" @click.stop/>
                         </a-popconfirm>
                         <edit-outlined key="edit" @click="handleDocEdit(doc)" style="color: #1677ff"
                                        title="编辑文档基本信息"></edit-outlined>
@@ -257,6 +257,14 @@
             <p class="ant-upload-hint">支持单个或批量上传</p>
             <p class="ant-upload-hint">支持 txt,md,pdf,word(doc, docx)文件上传</p>
           </a-upload-dragger>
+        </a-form-item>
+      </a-form>
+    </a-modal>
+    <a-modal title="更新文档" :open="updateDocModelVisible" width="600px" @ok="handleUpdateDocSubmit"
+             @cancel="()=>{updateDocModelVisible = false}">
+      <a-form ref="updateDocFormRef" :model="updateDocFormData" :rules="updateDocFormRules" layout="vertical">
+        <a-form-item label="文档标题" name="title">
+          <a-input v-model:value="updateDocFormData.title" placeholder="输入文档标题"></a-input>
         </a-form-item>
       </a-form>
     </a-modal>
@@ -485,7 +493,6 @@ const docSearchFormRef = ref()
 const docSearchFormData = ref<any>({
   title: ''
 })
-const uploadDocModelTitle = ref<string>('上传文档')
 const uploadDocModelVisible = ref<boolean>(false)
 const showUploadDocModel = () => {
   uploadDocModelVisible.value = true
@@ -543,7 +550,6 @@ const handleDocDelete = async (id: number | undefined) => {
     message.error('删除失败')
   }
 }
-const uploadDocSubmitLoading = ref<boolean>(false)
 const uploadDocFormRules = {
   title: [{required: true, message: '请输入文档标题', trigger: 'blur'},
     {max: 20, message: '文档标题长度不能超过20个字符', trigger: 'blur'}],
@@ -598,7 +604,35 @@ const handleUploadDocSubmit = async () => {
   }
   uploadDocModelVisible.value = false
 }
-
+const updateDocModelVisible = ref<boolean>(false)
+const updateDocFormData = ref<KnowledgeBaseDoc>({status: "", title: ''})
+const updateDocFormRules = {
+  title: [{required: true, message: '请输入文档标题', trigger: 'blur'},
+    {max: 20, message: '文档标题长度不能超过20个字符', trigger: 'blur'}]
+}
+const updateDocFormRef = ref()
+const handleDocEdit = async (doc: KnowledgeBaseDoc) => {
+  updateDocModelVisible.value = true
+  updateDocFormData.value = doc
+}
+const handleUpdateDocSubmit = async () => {
+  try {
+    await updateDocFormRef.value.validateFields()
+  } catch (error: any) {
+    message.error(error.errorFields[0].errors[0] || '验证失败')
+    return
+  }
+  try {
+    const res = await kbDocApi.updateDoc(updateDocFormData.value)
+    if (res.code === '200') {
+      message.success('更新成功')
+      await loadDocList()
+      updateDocModelVisible.value = false
+    }
+  } catch (error: any) {
+    message.error(error.message || '更新文档失败')
+  }
+}
 onMounted(() => {
   loadKnowledgeBases()
 })

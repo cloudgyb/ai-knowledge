@@ -23,7 +23,14 @@ export const kbDocApi = {
     },
 
     // 删除 AI 模型
-    delete(id: number|undefined): Promise<ApiResponse<any>> {
+    delete(id: number | undefined): Promise<ApiResponse<any>> {
         return request.delete('/kb/doc', {params: {id}})
+    },
+    updateDoc(value: KnowledgeBaseDoc): Promise<ApiResponse<any>> {
+        const formData = new FormData();
+        formData.append('id', value.id ? value.id + "" : '')
+        formData.append('title', value.title ? value.title + "" : '')
+        formData.append('enable', value.enable ? value.enable + "" : "true")
+        return request.post('/kb/doc/update', formData)
     }
 }

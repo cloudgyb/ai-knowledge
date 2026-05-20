@@ -47,9 +47,9 @@ public class KnowledgeBaseDocManageController {
 
     @PostMapping("/update")
     public ApiResponse<Void> update(@NotNull @RequestParam("id") Integer id,
-                                    @NotNull @RequestParam("file") String title,
+                                    @NotNull @RequestParam("title") String title,
                                     @NotNull @RequestParam("enable") Boolean enable,
-                                    @RequestParam("file") MultipartFile file) {
+                                    @RequestParam(name = "file", required = false) MultipartFile file) {
         knowledgeBaseDocService.updateDoc(id, title, enable, file);
         return ApiResponse.success();
     }
