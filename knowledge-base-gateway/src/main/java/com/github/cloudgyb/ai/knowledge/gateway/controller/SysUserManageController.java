@@ -1,7 +1,7 @@
-package com.github.cloudgyb.ai.knowledge.geteway.controller;
+package com.github.cloudgyb.ai.knowledge.gateway.controller;
 
-import com.github.cloudgyb.ai.knowledge.geteway.entity.SysUserEntity;
-import com.github.cloudgyb.ai.knowledge.geteway.service.SysUserClient;
+import com.github.cloudgyb.ai.knowledge.gateway.entity.SysUserEntity;
+import com.github.cloudgyb.ai.knowledge.gateway.service.SysUserClient;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;

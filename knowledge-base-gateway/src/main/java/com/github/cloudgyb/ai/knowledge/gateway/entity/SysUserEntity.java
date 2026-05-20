@@ -1,4 +1,4 @@
-package com.github.cloudgyb.ai.knowledge.geteway.entity;
+package com.github.cloudgyb.ai.knowledge.gateway.entity;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 

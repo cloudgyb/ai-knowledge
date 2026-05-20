@@ -46,6 +46,7 @@ sa-token:
   auto-renew: true
   token-name: token
   token-style: uuid
+  is-read-cookie: false
 
 
 knowledge-base:

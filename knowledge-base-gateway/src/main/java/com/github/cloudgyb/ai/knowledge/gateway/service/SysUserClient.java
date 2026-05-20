@@ -1,6 +1,6 @@
-package com.github.cloudgyb.ai.knowledge.geteway.service;
+package com.github.cloudgyb.ai.knowledge.gateway.service;
 
-import com.github.cloudgyb.ai.knowledge.geteway.entity.SysUserEntity;
+import com.github.cloudgyb.ai.knowledge.gateway.entity.SysUserEntity;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;

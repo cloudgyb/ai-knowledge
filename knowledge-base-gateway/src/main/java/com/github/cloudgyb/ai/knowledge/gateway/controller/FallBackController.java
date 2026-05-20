@@ -1,4 +1,4 @@
-package com.github.cloudgyb.ai.knowledge.geteway.controller;
+package com.github.cloudgyb.ai.knowledge.gateway.controller;
 
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;

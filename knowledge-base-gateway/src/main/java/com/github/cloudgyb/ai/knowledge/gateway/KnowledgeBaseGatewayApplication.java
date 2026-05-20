@@ -1,4 +1,4 @@
-package com.github.cloudgyb.ai.knowledge.geteway;
+package com.github.cloudgyb.ai.knowledge.gateway;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -14,11 +14,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 @SpringBootApplication
-@EnableFeignClients(basePackages = "com.github.cloudgyb.ai.knowledge.geteway.service")
-public class KnowledgeBaseGetewayApplication {
+@EnableFeignClients(basePackages = "com.github.cloudgyb.ai.knowledge.gateway.service")
+public class KnowledgeBaseGatewayApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(KnowledgeBaseGetewayApplication.class, args);
+        SpringApplication.run(KnowledgeBaseGatewayApplication.class, args);
     }
 
     @Bean
