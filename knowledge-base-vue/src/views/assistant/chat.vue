@@ -68,6 +68,7 @@ import {useRoute} from "vue-router";
 import {useInputMsgStore} from "@/stores/userInputMsg";
 import Markdown from '@/components/Markdown/index.vue'
 import StreamMarkdown from '@/components/Markdown/StreamMarkdown.vue'
+import {createEventSource} from '@/utils/request'
 import 'highlight.js/styles/github.min.css'
 import '@/assets/styles/markdown.css'
 
@@ -177,7 +178,7 @@ const handleSendMessage = async () => {
       mid: inputMsgStore.aiModelId + ""
     })
 
-    const eventSource = new EventSource(`/api/ai/chat/connect?${params.toString()}`)
+    const eventSource = createEventSource(`/api/ai/chat/connect?${params.toString()}`)
 
     let accumulatedContent = ''
     eventSource.addEventListener('content', (event) => {

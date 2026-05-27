@@ -2,6 +2,7 @@ import axios, {type AxiosError} from 'axios'
 import type {AxiosInstance} from 'axios'
 import {AppConfig} from './env'
 import type {ApiResponse} from "@/api/model/types";
+import { EventSourcePolyfill } from 'event-source-polyfill';
 
 const request: AxiosInstance = axios.create({
     baseURL: AppConfig.apiBaseUrl,
@@ -47,5 +48,16 @@ request.interceptors.response.use(
         return Promise.reject(new Error(error.response?.data?.message || '请求错误！'))
     }
 )
-
+const createEventSource = (url: string): EventSourcePolyfill => {
+    const token = localStorage.getItem('token')
+    if (token) {
+        return new EventSourcePolyfill(url, {
+            headers: {
+                'token': token
+            }
+        })
+    }
+    return new EventSourcePolyfill(url)
+}
+export {createEventSource}
 export default request
