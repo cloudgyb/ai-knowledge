@@ -36,3 +36,7 @@ build/
 ### AI ###
 .claude
 .tmp
+
+### log ###
+*.log
+/log
