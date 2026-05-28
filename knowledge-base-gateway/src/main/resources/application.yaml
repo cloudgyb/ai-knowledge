@@ -34,7 +34,7 @@ spring:
                   args: {
                     parts: 1
                   }
-                - name: SetResponseHeader
+                - name: AddResponseHeader
                   args: {
                     name: "X-Request-Start",
                     value: "hello"
