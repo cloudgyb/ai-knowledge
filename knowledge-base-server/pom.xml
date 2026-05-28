@@ -88,10 +88,15 @@
             <artifactId>langchain4j</artifactId>
             <version>1.12.2</version>
         </dependency>
-        <dependency>
+        <!--<dependency>
             <groupId>dev.langchain4j</groupId>
             <artifactId>langchain4j-http-client-jdk</artifactId>
             <version>1.12.2</version>
+        </dependency>-->
+        <dependency>
+            <groupId>dev.langchain4j</groupId>
+            <artifactId>langchain4j-http-client-okhttp</artifactId>
+            <version>1.13.0-beta23</version>
         </dependency>
         <!-- 模型模型提供商 -->
         <dependency>

@@ -40,8 +40,7 @@ mybatis-plus:
       update-strategy: not_null
   configuration:
     map-underscore-to-camel-case: true
-    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
-
+    #log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
 sa-token:
   auto-renew: true
   token-name: token
@@ -65,3 +64,6 @@ ai:
         password: postgres
         table: embedding_store
         metadataStorageMode: COMBINED_JSON
+logging:
+  file:
+    name: ./log/knowledge-base.log
