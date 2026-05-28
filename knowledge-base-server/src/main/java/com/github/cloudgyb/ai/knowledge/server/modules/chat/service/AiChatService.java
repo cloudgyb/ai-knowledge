@@ -3,6 +3,7 @@ package com.github.cloudgyb.ai.knowledge.server.modules.chat.service;
 import com.github.cloudgyb.ai.knowledge.server.modules.ai.domain.AiModel;
 import com.github.cloudgyb.ai.knowledge.server.modules.ai.service.AiChatModelFactory;
 import com.github.cloudgyb.ai.knowledge.server.modules.ai.service.AiModelService;
+import com.github.cloudgyb.ai.knowledge.server.modules.ai.tools.WeatherQueryTool;
 import com.github.cloudgyb.ai.knowledge.server.modules.chat.ChatSSEEvents;
 import com.github.cloudgyb.ai.knowledge.server.modules.chat.ConversationStatus;
 import com.github.cloudgyb.ai.knowledge.server.modules.chat.domain.*;
@@ -180,6 +181,7 @@ public class AiChatService {
                         .id(cid)
                         .maxMessages(PersistentChatMemoryStore.maxMessages)
                         .chatMemoryStore(persistentChatMemoryStore).build())
+                .tools(new WeatherQueryTool())
                 .build();
         TokenStream stream = assistant.chat(text);
         List<Long> ids = initMsg(cid, text);// 插入聊天消息
@@ -196,6 +198,9 @@ public class AiChatService {
                 throw new RuntimeException(e);
             }
         });
+        stream.beforeToolExecution(tool -> log.info("tool: {}", tool));
+        stream.onPartialToolCall(toolStart -> log.info("tool started: {}", toolStart));
+        stream.onToolExecuted(toolExecution -> log.info("tool executed: {}", toolExecution));
         stream.onPartialResponse(content -> {
             log.info("partial response: {}", content);
             try {
