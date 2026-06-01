@@ -64,6 +64,9 @@ ai:
         password: postgres
         table: embedding_store
         metadataStorageMode: COMBINED_JSON
+  http:
+    debug: true
+
 logging:
   file:
     name: ./log/knowledge-base.log
