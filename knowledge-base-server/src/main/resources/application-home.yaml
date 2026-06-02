@@ -57,7 +57,14 @@ ai:
         metadataStorageMode: COMBINED_JSON
   http:
     debug: true
+  scoring:
+    model:
+      onnx:
+        pathToModel: D:\Java\Xenovabge-reranker-base\model.onnx
+        pathToTokenizer: D:\Java\Xenovabge-reranker-base\tokenizer.json
 
 logging:
   file:
     name: ./log/knowledge-base.log
+  level:
+    com.github.cloudgyb: debug

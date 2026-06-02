@@ -3,6 +3,7 @@ package com.github.cloudgyb.ai.knowledge.server.modules.chat.service;
 import com.github.cloudgyb.ai.knowledge.server.modules.ai.domain.AiModel;
 import com.github.cloudgyb.ai.knowledge.server.modules.ai.service.AiChatModelFactory;
 import com.github.cloudgyb.ai.knowledge.server.modules.ai.service.AiModelService;
+import com.github.cloudgyb.ai.knowledge.server.modules.ai.service.AiScoringModelFactory;
 import com.github.cloudgyb.ai.knowledge.server.modules.ai.tools.WeatherQueryTool;
 import com.github.cloudgyb.ai.knowledge.server.modules.chat.ChatSSEEvents;
 import com.github.cloudgyb.ai.knowledge.server.modules.chat.ConversationStatus;
@@ -19,6 +20,8 @@ import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.chat.StreamingChatModel;
 import dev.langchain4j.model.embedding.EmbeddingModel;
 import dev.langchain4j.model.output.TokenUsage;
+import dev.langchain4j.rag.DefaultRetrievalAugmentor;
+import dev.langchain4j.rag.content.aggregator.ReRankingContentAggregator;
 import dev.langchain4j.rag.content.retriever.EmbeddingStoreContentRetriever;
 import dev.langchain4j.service.AiServices;
 import dev.langchain4j.service.TokenStream;
@@ -54,6 +57,7 @@ public class AiChatService {
     private final AiChatModelFactory aiChatModelFactory;
     private final ChatConversationTitleGenerator chatConversationTitleGenerator;
     private final PersistentChatMemoryStore persistentChatMemoryStore;
+    private final AiScoringModelFactory aiScoringModelFactory;
 
     public AiChatService(ThreadPoolTaskExecutor threadPoolTaskExecutor,
                          AiModelService aiModelService,
@@ -65,7 +69,8 @@ public class AiChatService {
                          ChatMessageService chatMessageService,
                          AiChatModelFactory aiChatModelFactory,
                          ChatConversationTitleGenerator chatConversationTitleGenerator,
-                         PersistentChatMemoryStore persistentChatMemoryStore) {
+                         PersistentChatMemoryStore persistentChatMemoryStore,
+                         AiScoringModelFactory aiScoringModelFactory) {
         this.threadPoolTaskExecutor = threadPoolTaskExecutor;
         this.aiModelService = aiModelService;
         this.knowledgeBaseService = knowledgeBaseService;
@@ -77,6 +82,7 @@ public class AiChatService {
         this.aiChatModelFactory = aiChatModelFactory;
         this.chatConversationTitleGenerator = chatConversationTitleGenerator;
         this.persistentChatMemoryStore = persistentChatMemoryStore;
+        this.aiScoringModelFactory = aiScoringModelFactory;
     }
 
     public SseEmitter chat(Long cid, String text, Integer kbId, Integer modelId) {
@@ -171,7 +177,17 @@ public class AiChatService {
         String systemMessage = "你是一个问答助手，你的名字：AI 小助手；请根据用户提问使用中文回答问题，并尽量详细。" +
                 "格式必须是正确 markdown 格式。";
         if (embeddingStoreContentRetriever != null) {
-            aiServicesBuilder.contentRetriever(embeddingStoreContentRetriever);
+            // 构建内容重排序Aggregator
+            ReRankingContentAggregator reRankingContentAggregator = ReRankingContentAggregator.builder()
+                    .scoringModel(aiScoringModelFactory.createInProcessModel())
+                    .maxResults(3)
+                    .build();
+            DefaultRetrievalAugmentor retrievalAugmentor = DefaultRetrievalAugmentor.builder()
+                    .contentRetriever(embeddingStoreContentRetriever)
+                    .contentAggregator(reRankingContentAggregator)
+                    .build();
+            aiServicesBuilder.retrievalAugmentor(retrievalAugmentor);
+            //aiServicesBuilder.contentRetriever(embeddingStoreContentRetriever);
             systemMessage = "你是一个知识库问答助手，你的名字：AI 小助手；请根据知识库内容回答问题。" +
                     "请使用中文回答，并尽量详细。格式必须是正确 markdown 格式。";
         }
