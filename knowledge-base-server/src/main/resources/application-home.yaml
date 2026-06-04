@@ -35,8 +35,7 @@ mybatis-plus:
       update-strategy: not_null
   configuration:
     map-underscore-to-camel-case: true
-    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
-
+    log-impl: org.apache.ibatis.logging.nologging.NoLoggingImpl
 
 
 knowledge-base:
@@ -67,4 +66,6 @@ logging:
   file:
     name: ./log/knowledge-base.log
   level:
+    root: info
     com.github.cloudgyb: debug
+    com.github.cloudgyb.ai.knowledge.server.modules.chat.service.AiChatService: info
