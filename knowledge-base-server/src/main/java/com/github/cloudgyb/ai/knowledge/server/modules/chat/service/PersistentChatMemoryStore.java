@@ -59,11 +59,11 @@ public class PersistentChatMemoryStore implements ChatMemoryStore {
         if (!(memoryId instanceof Long mid)) {
             throw new IllegalArgumentException("memoryId must be Long");
         }
+        deleteMessages(memoryId);
         if (log.isInfoEnabled()) {
             log.info("更新记忆 memoryId: {}", memoryId);
             log.info("更新了{}条记忆数据", messages.size());
         }
-        deleteMessages(memoryId);
         for (ChatMessage message : messages) {
             ChatMemory chatMemory = new ChatMemory();
             chatMemory.setCid(mid);
