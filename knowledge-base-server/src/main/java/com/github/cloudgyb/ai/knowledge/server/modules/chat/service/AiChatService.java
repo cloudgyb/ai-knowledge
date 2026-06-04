@@ -6,6 +6,7 @@ import com.github.cloudgyb.ai.knowledge.server.modules.ai.service.AiModelService
 import com.github.cloudgyb.ai.knowledge.server.modules.ai.service.AiScoringModelFactory;
 import com.github.cloudgyb.ai.knowledge.server.modules.ai.tools.WeatherQueryTool;
 import com.github.cloudgyb.ai.knowledge.server.modules.chat.ChatSSEEvents;
+import com.github.cloudgyb.ai.knowledge.server.modules.chat.ChatSseEmitter;
 import com.github.cloudgyb.ai.knowledge.server.modules.chat.ConversationStatus;
 import com.github.cloudgyb.ai.knowledge.server.modules.chat.domain.*;
 import com.github.cloudgyb.ai.knowledge.server.modules.commons.BusinessException;
@@ -93,11 +94,10 @@ public class AiChatService {
         if (chatConversation.getCurrentStatus() == ConversationStatus.ACTIVE) {
             throw new BusinessException("对话正在进行中！");
         }
-
-        SseEmitter sseEmitter = new SseEmitter(0L);
-        sseEmitter.onCompletion(() -> System.out.println("连接完成"));
-        sseEmitter.onTimeout(() -> System.out.println("连接超时"));
-        sseEmitter.onError(throwable -> System.out.println("连接错误"));
+        SseEmitter sseEmitter = new ChatSseEmitter(0L);
+        sseEmitter.onCompletion(() -> log.info("SseEmitter 连接已关闭"));
+        sseEmitter.onTimeout(() -> log.warn("SseEmitter 连接超时"));
+        sseEmitter.onError(throwable -> log.error("SseEmitter 连接错误"));
         // 更新对话状态
         Date lastActiveTime = new Date();
         chatConversationService.updateConversationStatus(cid, ConversationStatus.ACTIVE, null, lastActiveTime);
@@ -181,6 +181,7 @@ public class AiChatService {
             ReRankingContentAggregator reRankingContentAggregator = ReRankingContentAggregator.builder()
                     .scoringModel(aiScoringModelFactory.createInProcessModel())
                     .maxResults(3)
+                    .minScore(0.65)
                     .build();
             DefaultRetrievalAugmentor retrievalAugmentor = DefaultRetrievalAugmentor.builder()
                     .contentRetriever(embeddingStoreContentRetriever)
@@ -206,31 +207,34 @@ public class AiChatService {
         Long cmId = ids.get(2);
         stream.onPartialThinking(partialThinking -> {
             String thinking = partialThinking.text();
-            log.info("partial thinking: {}", partialThinking);
+            if (log.isDebugEnabled()) {
+                log.debug("partial thinking: {}", partialThinking);
+            }
             try {
                 sseEmitter.send(ChatSSEEvents.thinking(thinking).build());
-                chatMessageService.appendThinkingMessage(tmId, thinking);
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
+            chatMessageService.appendThinkingMessage(tmId, thinking);
         });
         stream.beforeToolExecution(tool -> log.info("tool: {}", tool));
         stream.onPartialToolCall(toolStart -> log.info("tool started: {}", toolStart));
         stream.onToolExecuted(toolExecution -> log.info("tool executed: {}", toolExecution));
         stream.onPartialResponse(content -> {
-            log.info("partial response: {}", content);
+            if (log.isDebugEnabled()) {
+                log.debug("partial response: {}", content);
+            }
             try {
                 sseEmitter.send(ChatSSEEvents.content(content).build());
-                chatMessageService.appendContentMessage(cmId, content);
             } catch (IOException e) {
-                sseEmitter.complete();
                 throw new RuntimeException(e);
             }
+            chatMessageService.appendContentMessage(cmId, content);
 
         });
         stream.onError(throwable -> {
             try {
-                log.error("error: ", throwable);
+                log.error("stream error: ", throwable);
                 sseEmitter.send(ChatSSEEvents.error("啊哦！聊天发生错误！"));
             } catch (IOException e) {
                 sseEmitter.complete();
@@ -245,7 +249,9 @@ public class AiChatService {
             }
             sseEmitter.complete();
             TokenUsage tokenUsage = chatResponse.tokenUsage();
-            log.info("tokenUsage: {}", tokenUsage);
+            if (log.isDebugEnabled()) {
+                log.debug("tokenUsage: {}", tokenUsage);
+            }
             ChatMessageMetadata chatMessageMetadata = new ChatMessageMetadata();
             chatMessageMetadata.setTokenUsage(tokenUsage);
             chatMessageService.updateMetadata(umId, chatMessageMetadata);
