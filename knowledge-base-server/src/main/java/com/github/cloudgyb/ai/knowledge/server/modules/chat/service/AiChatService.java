@@ -37,6 +37,7 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import java.io.IOException;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * AI 聊天服务实现，SSE 流式推送
@@ -205,6 +206,7 @@ public class AiChatService {
         Long umId = ids.get(0);
         Long tmId = ids.get(1);
         Long cmId = ids.get(2);
+        AtomicBoolean isEmitIonError = new AtomicBoolean(false);
         stream.onPartialThinking(partialThinking -> {
             String thinking = partialThinking.text();
             if (log.isDebugEnabled()) {
@@ -213,9 +215,13 @@ public class AiChatService {
             try {
                 sseEmitter.send(ChatSSEEvents.thinking(thinking).build());
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                if (!isEmitIonError.get()) {
+                    log.error("stream IO exception: {},推送消息失败!", e.getMessage());
+                    isEmitIonError.set(true);
+                }
+            } finally {
+                chatMessageService.appendThinkingMessage(tmId, thinking);
             }
-            chatMessageService.appendThinkingMessage(tmId, thinking);
         });
         stream.beforeToolExecution(tool -> log.info("tool: {}", tool));
         stream.onPartialToolCall(toolStart -> log.info("tool started: {}", toolStart));
@@ -224,13 +230,18 @@ public class AiChatService {
             if (log.isDebugEnabled()) {
                 log.debug("partial response: {}", content);
             }
+            if (content == null)
+                return;
             try {
                 sseEmitter.send(ChatSSEEvents.content(content).build());
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                if (!isEmitIonError.get()) {
+                    log.error("stream IO exception: {},推送消息失败!", e.getMessage());
+                    isEmitIonError.set(true);
+                }
+            } finally {
+                chatMessageService.appendContentMessage(cmId, content);
             }
-            chatMessageService.appendContentMessage(cmId, content);
-
         });
         stream.onError(throwable -> {
             try {
@@ -238,23 +249,30 @@ public class AiChatService {
                 sseEmitter.send(ChatSSEEvents.error("啊哦！聊天发生错误！"));
             } catch (IOException e) {
                 sseEmitter.complete();
-                throw new RuntimeException(e);
+                if (!isEmitIonError.get()) {
+                    log.error("stream IO exception: {},推送消息失败!", e.getMessage());
+                    isEmitIonError.set(true);
+                }
             }
         });
         stream.onCompleteResponse(chatResponse -> {
             try {
                 sseEmitter.send(ChatSSEEvents.close("[DONE]").build());
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                if (!isEmitIonError.get()) {
+                    log.error("stream IO exception: {},推送消息失败!", e.getMessage());
+                    isEmitIonError.set(true);
+                }
+            } finally {
+                sseEmitter.complete();
+                TokenUsage tokenUsage = chatResponse.tokenUsage();
+                if (log.isDebugEnabled()) {
+                    log.debug("tokenUsage: {}", tokenUsage);
+                }
+                ChatMessageMetadata chatMessageMetadata = new ChatMessageMetadata();
+                chatMessageMetadata.setTokenUsage(tokenUsage);
+                chatMessageService.updateMetadata(umId, chatMessageMetadata);
             }
-            sseEmitter.complete();
-            TokenUsage tokenUsage = chatResponse.tokenUsage();
-            if (log.isDebugEnabled()) {
-                log.debug("tokenUsage: {}", tokenUsage);
-            }
-            ChatMessageMetadata chatMessageMetadata = new ChatMessageMetadata();
-            chatMessageMetadata.setTokenUsage(tokenUsage);
-            chatMessageService.updateMetadata(umId, chatMessageMetadata);
         });
         stream.start();
     }
