@@ -27,6 +27,12 @@ spring:
     multipart:
       max-file-size: 10485760
       location: D:\IdeaProjects\ai-knowledge\
+  data:
+    redis:
+      host: 127.0.0.1
+      port: 6379
+      database: 1
+      timeout: 5s
 
 mybatis-plus:
   global-config:
@@ -35,7 +41,7 @@ mybatis-plus:
       update-strategy: not_null
   configuration:
     map-underscore-to-camel-case: true
-    log-impl: org.apache.ibatis.logging.nologging.NoLoggingImpl
+    log-impl: org.apache.ibatis.logging.slf4j.Slf4jImpl
 
 
 knowledge-base:
@@ -59,8 +65,8 @@ ai:
   scoring:
     model:
       onnx:
-        pathToModel: D:\Java\Xenovabge-reranker-base\model.onnx
-        pathToTokenizer: D:\Java\Xenovabge-reranker-base\tokenizer.json
+        pathToModel: D:\ai_models\Xenova\onnx\bge-reranker-base\model.onnx
+        pathToTokenizer: D:\ai_models\Xenova\onnx\bge-reranker-base\tokenizer.json
 
 logging:
   file:
@@ -68,4 +74,4 @@ logging:
   level:
     root: info
     com.github.cloudgyb: debug
-    com.github.cloudgyb.ai.knowledge.server.modules.chat.service.AiChatService: info
+    com.github.cloudgyb.ai.knowledge.server.modules.chat.service.AiChatService: debug
