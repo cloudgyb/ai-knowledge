@@ -12,6 +12,8 @@ import dev.langchain4j.community.model.qianfan.QianfanChatModel;
 import dev.langchain4j.community.model.qianfan.QianfanStreamingChatModel;
 import dev.langchain4j.community.model.zhipu.ZhipuAiChatModel;
 import dev.langchain4j.community.model.zhipu.ZhipuAiStreamingChatModel;
+import dev.langchain4j.http.client.HttpClientBuilder;
+import dev.langchain4j.http.client.jdk.JdkHttpClient;
 import dev.langchain4j.model.anthropic.AnthropicChatModel;
 import dev.langchain4j.model.anthropic.AnthropicStreamingChatModel;
 import dev.langchain4j.model.chat.ChatModel;
@@ -89,12 +91,17 @@ public class AiChatModelFactory {
     }
 
     private StreamingChatModel createOllamaAIStreamingChatModel(AiModel aiModel, AiModelConfig aiModelConfig) {
+        // Ollama 模型不支持标准的 text/event-stream 需要使用 JDK HttpClient，使用 OkHttp 会抛异常
+        HttpClientBuilder build = JdkHttpClient
+                .builder()
+                .connectTimeout(Duration.ofSeconds(aiModelConfig.getTimeout()));
         return dev.langchain4j.model.ollama.OllamaStreamingChatModel.builder()
                 .baseUrl(aiModel.getModelUrl())
                 .timeout(Duration.ofSeconds(aiModelConfig.getTimeout()))
                 .modelName(aiModel.getModelName())
                 .temperature(aiModelConfig.getTemperature())
                 .topP(aiModelConfig.getTalk())
+                .httpClientBuilder(build)
                 .build();
     }
 
