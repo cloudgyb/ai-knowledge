@@ -158,50 +158,142 @@
         @ok="handleSubmit"
         :confirm-loading="submitLoading"
     >
-      <a-form
-          ref="formRef"
-          :model="formData"
-          :rules="formRules"
-          layout="vertical"
-      >
-        <a-form-item label="名称" name="customName">
-          <a-input v-model:value="formData.customName" placeholder="请输入名称"/>
-        </a-form-item>
-        <a-form-item label="模型类型" name="modelType">
-          <a-select v-model:value="formData.modelType" :options="currentProviderAiModelTypeObjs"
-                    @change="handleCurrentAiModelChange"/>
-        </a-form-item>
-        <a-form-item label="AI 供应商" name="providerId">
-          <a-select v-model:value="formData.providerId" disabled>
-            <a-select-option v-for="provider in allProviders" :key="provider.id" :value="provider.id">
-              <img :src="provider.logoUrl" alt="logo" style="width: 20px; height: 20px; margin-right: 8px;">
-              {{ provider.providerName }}
-            </a-select-option>
-          </a-select>
-        </a-form-item>
-        <a-form-item label="AI 模型" name="modelId">
-          <a-select v-model:value="formData.modelId" @change="handleCurrentSysAiModelChange">
-            <a-select-option v-for="aiModel in currentProviderAiModelsTyped" :key="aiModel.id" :value="aiModel.id">
-              {{ aiModel.modelName }}
-            </a-select-option>
-          </a-select>
-        </a-form-item>
-        <a-form-item label="模型名称" name="modelName" v-if="formData.isCustom">
-          <a-input v-model:value="formData.modelName"/>
-        </a-form-item>
-        <a-form-item label="模型接口地址" name="modelUrl">
-          <a-input v-model:value="formData.modelUrl" placeholder="请输入模型接口地址"/>
-        </a-form-item>
-        <a-form-item label="模型接口Key" name="modelApiKey">
-          <a-input-password v-model:value="formData.modelApiKey" placeholder="请输入模型接口key"/>
-        </a-form-item>
-        <a-form-item label="是否启用" name="status">
-          <a-radio-group v-model:value="formData.status">
-            <a-radio :value="1">启用</a-radio>
-            <a-radio :value="0">禁用</a-radio>
-          </a-radio-group>
-        </a-form-item>
-      </a-form>
+      <a-tabs v-model:activeKey="activeTab">
+        <!-- 基本配置 Tab -->
+        <a-tab-pane key="basic" tab="基本配置">
+          <a-form
+              ref="formRef"
+              :model="formData"
+              :rules="formRules"
+              layout="vertical"
+          >
+            <a-form-item label="名称" name="customName">
+              <a-input v-model:value="formData.customName" placeholder="请输入名称"/>
+            </a-form-item>
+            <a-form-item label="模型类型" name="modelType">
+              <a-select v-model:value="formData.modelType" :options="currentProviderAiModelTypeObjs"
+                        @change="handleCurrentAiModelChange"/>
+            </a-form-item>
+            <a-form-item label="AI 供应商" name="providerId">
+              <a-select v-model:value="formData.providerId" disabled>
+                <a-select-option v-for="provider in allProviders" :key="provider.id" :value="provider.id">
+                  <img :src="provider.logoUrl" alt="logo" style="width: 20px; height: 20px; margin-right: 8px;">
+                  {{ provider.providerName }}
+                </a-select-option>
+              </a-select>
+            </a-form-item>
+            <a-form-item label="AI 模型" name="modelId">
+              <a-select v-model:value="formData.modelId" @change="handleCurrentSysAiModelChange">
+                <a-select-option v-for="aiModel in currentProviderAiModelsTyped" :key="aiModel.id" :value="aiModel.id">
+                  {{ aiModel.modelName }}
+                </a-select-option>
+              </a-select>
+            </a-form-item>
+            <a-form-item label="模型名称" name="modelName" v-if="formData.isCustom">
+              <a-input v-model:value="formData.modelName"/>
+            </a-form-item>
+            <a-form-item label="模型接口地址" name="modelUrl">
+              <a-input v-model:value="formData.modelUrl" placeholder="请输入模型接口地址"/>
+            </a-form-item>
+            <a-form-item label="模型接口Key" name="modelApiKey">
+              <a-input-password v-model:value="formData.modelApiKey" placeholder="请输入模型接口key"/>
+            </a-form-item>
+            <a-form-item label="是否启用" name="status">
+              <a-radio-group v-model:value="formData.status">
+                <a-radio :value="1">启用</a-radio>
+                <a-radio :value="0">禁用</a-radio>
+              </a-radio-group>
+            </a-form-item>
+          </a-form>
+        </a-tab-pane>
+
+        <!-- 参数配置 Tab - 仅语言模型显示 -->
+        <a-tab-pane key="params" tab="参数配置" v-if="isLanguageModel">
+          <a-form
+              :model="formData.config"
+              layout="vertical"
+          >
+            <a-form-item label="模型温度 (temperature)">
+              <a-slider 
+                v-model:value="formData.config.temperature" 
+                :min="0" 
+                :max="1" 
+                :step="0.1"
+                :marks="{0: '0', 0.5: '0.5', 1: '1'}"
+              />
+              <div class="param-description">
+                控制生成文本的随机性。值越高，输出越随机；值越低，输出越确定。
+              </div>
+            </a-form-item>
+            
+            <a-form-item label="词汇多样性 (lexical)">
+              <a-slider 
+                v-model:value="formData.config.lexical" 
+                :min="0" 
+                :max="1" 
+                :step="0.1"
+                :marks="{0: '0', 0.5: '0.5', 1: '1'}"
+              />
+              <div class="param-description">
+                控制词汇的丰富程度。值越高，用词越多样；值越低，用词越简单。
+              </div>
+            </a-form-item>
+            
+            <a-form-item label="话题发散度 (talk)">
+              <a-slider 
+                v-model:value="formData.config.talk" 
+                :min="0" 
+                :max="1" 
+                :step="0.1"
+                :marks="{0: '0', 0.5: '0.5', 1: '1'}"
+              />
+              <div class="param-description">
+                控制话题的发散程度。值越高，话题越发散；值越低，话题越集中。
+              </div>
+            </a-form-item>
+            
+            <a-form-item label="重复惩罚 (repeat)">
+              <a-slider 
+                v-model:value="formData.config.repeat" 
+                :min="0" 
+                :max="1" 
+                :step="0.1"
+                :marks="{0: '0', 0.5: '0.5', 1: '1'}"
+              />
+              <div class="param-description">
+                控制内容重复的惩罚程度。值越高，越避免重复；值越低，允许更多重复。
+              </div>
+            </a-form-item>
+            
+            <a-form-item label="最大Token数 (tokens)">
+              <a-input-number 
+                v-model:value="formData.config.tokens" 
+                :min="1" 
+                :max="32768"
+                :step="1"
+                style="width: 100%"
+              />
+              <div class="param-description">
+                模型单次回复的最大token数量。建议根据实际需求设置，过大会增加响应时间。
+              </div>
+            </a-form-item>
+            
+            <a-form-item label="超时时间 (timeout)">
+              <a-input-number 
+                v-model:value="formData.config.timeout" 
+                :min="1" 
+                :max="300"
+                :step="1"
+                style="width: 100%"
+                addon-after="秒"
+              />
+              <div class="param-description">
+                等待AI响应的最长时间。超过此时间将自动终止请求。
+              </div>
+            </a-form-item>
+          </a-form>
+        </a-tab-pane>
+      </a-tabs>
     </a-modal>
   </div>
 </template>
@@ -249,7 +341,7 @@ const selectedProviderType = ref<string | undefined>(undefined)
 const modalVisible = ref(false)
 const modalTitle = ref('')
 const submitLoading = ref(false)
-
+const activeTab = ref('basic')
 // 表单
 const formRef = ref()
 const formData = ref<AiModel>({
@@ -263,7 +355,14 @@ const formData = ref<AiModel>({
   modelApiSecret: '',
   isCustom: false,
   status: 1,
-  config: {}
+  config: {
+    temperature: 0.7,
+    lexical: 0.5,
+    talk: 0.5,
+    repeat: 0.5,
+    tokens: 10240,
+    timeout: 30
+  }
 })
 
 const formRules = {
@@ -313,10 +412,19 @@ const selectProvider = (provider: AiModelProvider) => {
   formData.value.modelName = undefined
   formData.value.modelUrl = ''
   formData.value.modelApiKey = ''
+  formData.value.config = {
+    temperature: 0.7,
+    lexical: 0.5,
+    talk: 0.5,
+    repeat: 0.5,
+    tokens: 10240,
+    timeout: 30
+  }
 
   // 延迟打开新增弹窗
   setTimeout(() => {
     modalVisible.value = true
+    activeTab.value = 'basic'
   }, 100)
 }
 
@@ -347,6 +455,11 @@ const currentProviderAiModelTypeObjs = computed(() => {
   })
 })
 
+// 判断是否为语言模型
+const isLanguageModel = computed(() => {
+  return formData.value.modelType === 'LANG'
+})
+
 const handleCurrentAiModelChange = async (modelType: string) => {
   currentProviderAiModelsTyped.value = currentProviderAiModels.value.filter(item => item.modelType === modelType)
   const sysAiModel = currentProviderAiModelsTyped.value[0];
@@ -358,6 +471,11 @@ const handleCurrentAiModelChange = async (modelType: string) => {
   } else {
     formData.value.modelName = ''
     formData.value.isCustom = true
+  }
+  
+  // 如果切换到非语言模型，自动切换回基本配置 Tab
+  if (modelType !== 'LANG' && activeTab.value === 'params') {
+    activeTab.value = 'basic'
   }
 }
 
@@ -436,17 +554,31 @@ const handleAdd = async () => {
 const handleEdit = async (model: AiModel) => {
   modalTitle.value = '编辑 AI 模型'
   modalVisible.value = true
+  activeTab.value = 'basic'
   await loadAllProviders()
   await loadSysAiModels(model.provider?.id || 0)
   currentProviderAiModelsTyped.value = currentProviderAiModels.value.filter(item => item.modelType === model.modelType)
   formData.value = {
-    ...model
+    ...model,
+    config: model.config || {
+      temperature: 0.7,
+      lexical: 0.5,
+      talk: 0.5,
+      repeat: 0.5,
+      tokens: 10240,
+      timeout: 30
+    }
   }
   formData.value.modelId = currentProviderAiModels.value.filter(item => item.modelName === model.modelName).at(0)?.id
   formData.value.isCustom = false
   if(!formData.value.modelId) {
     formData.value.modelId = currentProviderAiModels.value.filter(item => item.modelName === '自定义').at(0)?.id
     formData.value.isCustom = true
+  }
+  
+  // 如果不是语言模型，确保在基本配置 Tab
+  if (model.modelType !== 'LANG') {
+    activeTab.value = 'basic'
   }
 }
 
@@ -598,4 +730,16 @@ onMounted(() => {
   color: rgba(0, 0, 0, 0.65);
   margin-top: 8px;
 }
+
+.param-description {
+  font-size: 12px;
+  color: rgba(0, 0, 0, 0.45);
+  margin-top: 4px;
+  line-height: 1.5;
+}
+
+:deep(.ant-tabs-content) {
+  padding-top: 16px;
+}
+
 </style>

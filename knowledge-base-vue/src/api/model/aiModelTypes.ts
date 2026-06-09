@@ -29,6 +29,20 @@ export interface SysAiModel {
 /**
  * AI 模型配置
  */
+export interface AiModelConfig {
+    id?: number;
+    modelId?: number;
+    temperature?: number;      // 模型温度
+    lexical?: number;          // 词汇属性
+    talk?: number;             // 话题属性
+    repeat?: number;           // 重复属性
+    tokens?: number;           // 最大回复的token数
+    timeout?: number;          // 等待AI响应的最长时间，单位为秒
+}
+
+/**
+ * AI 模型
+ */
 export interface AiModel {
     id?: number;
     customName?: string;
@@ -44,7 +58,7 @@ export interface AiModel {
     isCustom?: boolean;
     createTime?: Date | string;
     updateTime?: Date | string;
-    config?: {};
+    config: AiModelConfig;
     provider?: AiModelProvider;
 }
 
