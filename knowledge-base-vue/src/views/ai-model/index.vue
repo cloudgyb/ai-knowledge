@@ -164,8 +164,8 @@
           :rules="formRules"
           layout="vertical"
       >
-        <a-form-item label="模型名称" name="customName">
-          <a-input v-model:value="formData.customName" placeholder="请输入模型名称"/>
+        <a-form-item label="名称" name="customName">
+          <a-input v-model:value="formData.customName" placeholder="请输入名称"/>
         </a-form-item>
         <a-form-item label="模型类型" name="modelType">
           <a-select v-model:value="formData.modelType" :options="currentProviderAiModelTypeObjs"
@@ -267,8 +267,8 @@ const formData = ref<AiModel>({
 })
 
 const formRules = {
-  customName: [{required: true, message: '请输入模型名称', trigger: 'blur'},
-    {max: 20, message: '模型名称长度不能超过20个字符', trigger: 'blur'}],
+  customName: [{required: true, message: '请输入名称', trigger: 'blur'},
+    {max: 20, message: '名称长度不能超过20个字符', trigger: 'blur'}],
   modelName: [{required: true, message: '请输入模型名称', trigger: 'blur'},
     {max: 20, message: '模型名称长度不能超过20个字符', trigger: 'blur'}],
   modelType: [{required: true, message: '请选择模型类型', trigger: 'change'}],
