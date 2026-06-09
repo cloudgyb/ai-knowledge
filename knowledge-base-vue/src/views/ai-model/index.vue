@@ -97,6 +97,7 @@
                       show-quick-jumper
                       show-size-changer
                       :show-total="pagination.showTotal"
+                      :page-size-options="pagination.pageSizeOptions"
                       @change="handlePageChange"
                       @show-size-change="handlePageSizeChange"
         />
@@ -185,7 +186,7 @@
             </a-select-option>
           </a-select>
         </a-form-item>
-        <a-form-item label="模型名称" name="modelName" style="display: none">
+        <a-form-item label="模型名称" name="modelName" v-if="formData.isCustom">
           <a-input v-model:value="formData.modelName"/>
         </a-form-item>
         <a-form-item label="模型接口地址" name="modelUrl">
@@ -232,10 +233,11 @@ const aiModelList = ref<AiModel[]>([])
 // 分页
 const pagination = reactive<PaginationProps>({
   current: 1,
-  pageSize: 10,
+  pageSize: 12,
   total: 0,
   showSizeChanger: true,
   showQuickJumper: true,
+  pageSizeOptions: ['12', '24', '36'],
   showTotal: (total) => `共 ${total} 个`
 })
 
@@ -259,12 +261,15 @@ const formData = ref<AiModel>({
   modelUrl: '',
   modelApiKey: '',
   modelApiSecret: '',
+  isCustom: false,
   status: 1,
   config: {}
 })
 
 const formRules = {
   customName: [{required: true, message: '请输入模型名称', trigger: 'blur'},
+    {max: 20, message: '模型名称长度不能超过20个字符', trigger: 'blur'}],
+  modelName: [{required: true, message: '请输入模型名称', trigger: 'blur'},
     {max: 20, message: '模型名称长度不能超过20个字符', trigger: 'blur'}],
   modelType: [{required: true, message: '请选择模型类型', trigger: 'change'}],
   providerId: [{required: true, message: '请选择 AI 供应商', trigger: 'change'}],
@@ -347,14 +352,26 @@ const handleCurrentAiModelChange = async (modelType: string) => {
   const sysAiModel = currentProviderAiModelsTyped.value[0];
   formData.value.modelId = sysAiModel.id
   formData.value.modelUrl = sysAiModel.modelUrl
-  formData.value.modelName = sysAiModel.modelName
+  if(sysAiModel?.modelName !== '自定义') {
+    formData.value.modelName = sysAiModel?.modelName
+    formData.value.isCustom = false
+  } else {
+    formData.value.modelName = ''
+    formData.value.isCustom = true
+  }
 }
 
 const handleCurrentSysAiModelChange = async (sysAiModelId: number) => {
   const sysAiModel = currentProviderAiModelsTyped.value.find(item => item.id === sysAiModelId)
   formData.value.modelId = sysAiModel?.id
   formData.value.modelUrl = sysAiModel?.modelUrl
-  formData.value.modelName = sysAiModel?.modelName
+  if(sysAiModel?.modelName !== '自定义') {
+    formData.value.modelName = sysAiModel?.modelName
+    formData.value.isCustom = false
+  } else {
+    formData.value.modelName = ''
+    formData.value.isCustom = true
+  }
 }
 const loadSysAiModels = async (providerId: number) => {
   try {
@@ -426,7 +443,11 @@ const handleEdit = async (model: AiModel) => {
     ...model
   }
   formData.value.modelId = currentProviderAiModels.value.filter(item => item.modelName === model.modelName).at(0)?.id
-  //debugger
+  formData.value.isCustom = false
+  if(!formData.value.modelId) {
+    formData.value.modelId = currentProviderAiModels.value.filter(item => item.modelName === '自定义').at(0)?.id
+    formData.value.isCustom = true
+  }
 }
 
 // 删除

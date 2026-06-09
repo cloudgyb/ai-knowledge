@@ -41,6 +41,7 @@ export interface AiModel {
     providerId?: number;
     createUserId?: number;
     status?: number;
+    isCustom?: boolean;
     createTime?: Date | string;
     updateTime?: Date | string;
     config?: {};
