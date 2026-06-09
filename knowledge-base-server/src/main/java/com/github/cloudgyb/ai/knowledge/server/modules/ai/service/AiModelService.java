@@ -85,6 +85,7 @@ public class AiModelService extends ServiceImpl<AiModelMapper, AiModel> {
             throw new BusinessException("添加模型失败");
         }
         AiModelConfig config = dto.getConfig();
+        config.setId(null);
         config.setModelId(aiModel.getId());
         boolean save1 = aiModelConfigService.save(config);
         if (!save1) {
