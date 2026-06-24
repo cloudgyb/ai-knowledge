@@ -1,0 +1,74 @@
+server:
+  port: ${SERVER_PORT:8090}
+
+spring:
+  application:
+    name: knowledge-base-gateway
+  cloud:
+    nacos:
+      discovery:
+        enabled: true
+        server-addr: ${SPRING_CLOUD_NACOS_DISCOVERY_SERVER_ADDR:nacos:8848}
+        namespace: public
+        register-enabled: true
+        username: nacos
+        password: nacos
+        cluster-name: DEFAULT
+        metadata:
+          nacos.discovery.metadata.region: cn-hangzhou
+    gateway:
+      server:
+        webflux:
+          routes:
+            - id: knowledge-base-service
+              uri: lb://knowledge-base-server
+              predicates:
+                - Path=/api/**
+              filters:
+                - name: StripPrefix
+                  args:
+                    parts: 1
+                - name: AddResponseHeader
+                  args:
+                    name: "X-Request-Start"
+                    value: "hello"
+                - name: CircuitBreaker
+                  args:
+                    name: "knowledge-base-service"
+                    fallbackUri: "forward:/fallback"
+                    statusCodes: "404,500,503"
+    openfeign:
+      okhttp:
+        enabled: true
+    loadbalancer:
+      nacos:
+        enabled: true
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: GMT+8
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      knowledge-base-service:
+        wait-duration-in-open-state:
+          seconds: 20
+        failureRateThreshold: 50
+        slowCallDurationThreshold: 5s
+        slowCallRateThreshold: 50
+        sliding-window-type: COUNT_BASED
+        sliding-window-size: 100
+        permitted-number-of-calls-in-half-open-state: 5
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: '*'
+
+logging:
+  file:
+    name: /app/log/gateway.log
+  level:
+    root: info
+    org.springframework.cloud.gateway.filter.ReactiveLoadBalancerClientFilter: trace
