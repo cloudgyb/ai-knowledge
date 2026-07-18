@@ -10,6 +10,9 @@
           <span v-if="isCopied" class="copy-success">✓</span>
           <span v-else>📋</span>
         </button>
+        <button class="header-btn download-btn" @click="handleDownload" title="下载代码">
+          <span>⬇</span>
+        </button>
         <button v-if="canCollapse" class="header-btn collapse-btn" @click="toggleCollapse"
                 :title="isCollapsed ? '展开' : '收起'">
           <span class="collapse-icon" :class="{ collapsed: isCollapsed }">▼</span>
@@ -129,6 +132,63 @@ const initResizeObserver = () => {
   }
 }
 
+// 语言到文件扩展名映射
+const extMap: Record<string, string> = {
+  js: 'js', javascript: 'js',
+  ts: 'ts', typescript: 'ts',
+  py: 'py', python: 'py',
+  java: 'java',
+  go: 'go', golang: 'go',
+  rb: 'rb', ruby: 'rb',
+  php: 'php',
+  rs: 'rs', rust: 'rs',
+  kt: 'kt', kotlin: 'kt',
+  cs: 'cs', csharp: 'cs',
+  cpp: 'cpp', 'c++': 'cpp', c: 'c',
+  html: 'html', xml: 'xml',
+  css: 'css', scss: 'scss', less: 'less',
+  sql: 'sql',
+  sh: 'sh', bash: 'sh', shell: 'sh',
+  json: 'json', yaml: 'yaml', yml: 'yaml',
+  md: 'md', markdown: 'md',
+  dockerfile: 'Dockerfile',
+  vue: 'vue',
+  swift: 'swift',
+  dart: 'dart',
+  lua: 'lua',
+  r: 'r',
+  scala: 'scala',
+  toml: 'toml',
+  ini: 'ini',
+  makefile: 'Makefile',
+}
+
+// 获取下载文件名
+const downloadFilename = computed(() => {
+  const lang = props.language.trim().toLowerCase()
+  const ext = extMap[lang]
+  if (ext) {
+    // Dockerfile 和 Makefile 没有扩展名，直接用文件名
+    if (ext === 'Dockerfile') return 'Dockerfile'
+    if (ext === 'Makefile') return 'Makefile'
+    return `code.${ext}`
+  }
+  return 'code.txt'
+})
+
+// 下载代码
+const handleDownload = () => {
+  const blob = new Blob([props.code], { type: 'text/plain;charset=utf-8' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = downloadFilename.value
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+  URL.revokeObjectURL(url)
+}
+
 // 复制代码
 const handleCopy = async () => {
   try {
@@ -237,6 +297,11 @@ onUnmounted(() => {
 .copy-success {
   color: #1a7f37;
   font-size: 14px;
+}
+
+.download-btn span {
+  font-size: 14px;
+  line-height: 1;
 }
 
 .code-content-wrapper {

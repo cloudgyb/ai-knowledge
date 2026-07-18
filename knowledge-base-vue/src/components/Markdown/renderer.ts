@@ -21,17 +21,53 @@ function escapeHtml(html: string): string {
 // 使用 HTML 实体，避免 JS Unicode 转义问题
 const COPY_ICON = '&#128203;'  // 📋
 const CHECK_ICON = '&#9989;'  // ✅
+const DOWNLOAD_ICON = '&#11015;' // ⬇
+
+// 语言到文件扩展名映射
+const EXT_MAP: Record<string, string> = {
+  js: 'js', javascript: 'js',
+  ts: 'ts', typescript: 'ts',
+  py: 'py', python: 'py',
+  java: 'java',
+  go: 'go', golang: 'go',
+  rb: 'rb', ruby: 'rb',
+  php: 'php',
+  rs: 'rs', rust: 'rs',
+  kt: 'kt', kotlin: 'kt',
+  cs: 'cs', csharp: 'cs',
+  cpp: 'cpp', 'c++': 'cpp', c: 'c',
+  html: 'html', xml: 'xml',
+  css: 'css', scss: 'scss', less: 'less',
+  sql: 'sql',
+  sh: 'sh', bash: 'sh', shell: 'sh',
+  json: 'json', yaml: 'yaml', yml: 'yaml',
+  md: 'md', markdown: 'md',
+  dockerfile: 'Dockerfile',
+  vue: 'vue', swift: 'swift', dart: 'dart',
+  lua: 'lua', r: 'r', scala: 'scala',
+  toml: 'toml', ini: 'ini', makefile: 'Makefile',
+}
+
+function getDownloadFilename(lang: string): string {
+  const lowerLang = lang.trim().toLowerCase()
+  const ext = EXT_MAP[lowerLang]
+  if (!ext) return 'code.txt'
+  if (ext === 'Dockerfile') return 'Dockerfile'
+  if (ext === 'Makefile') return 'Makefile'
+  return `code.${ext}`
+}
 
 
 function highlightCode(str: string, lang: string): string {
     const language = lang.trim().toLowerCase()
     const copyBtn = `<button class="copy-btn" onclick="window.copyCodeBlock(this)" title="复制代码">${COPY_ICON}</button>`
+    const downloadBtn = `<button class="download-btn" onclick="window.downloadCodeBlock(this)" title="下载代码">${DOWNLOAD_ICON}</button>`
 
     if (str && hljs.getLanguage(language)) {
         const codeContent = hljs.highlight(str, {language, ignoreIllegals: true}).value
-        return `<pre class="code-block" data-lang="${language}">${copyBtn}<code>${codeContent}</code></pre>`
+        return `<pre class="code-block" data-lang="${language}">${copyBtn}${downloadBtn}<code>${codeContent}</code></pre>`
     } else {
-        return `<pre class="code-block" data-lang="${language || 'text'}">${copyBtn}<code>${escapeHtml(str)}</code></pre>`
+        return `<pre class="code-block" data-lang="${language || 'text'}">${copyBtn}${downloadBtn}<code>${escapeHtml(str)}</code></pre>`
     }
 }
 
@@ -61,6 +97,27 @@ if (typeof window !== 'undefined') {
             document.execCommand('copy')
             document.body.removeChild(textarea)
         }
+    }
+
+    // 全局下载函数 - 下载代码块为文件
+    ;(window as any).downloadCodeBlock = (btn: HTMLElement): void => {
+        const pre = btn.closest('pre')
+        if (!pre) return
+        const code = pre.querySelector('code')
+        if (!code) return
+        const text = code.innerText || code.textContent || ''
+        const lang = pre.getAttribute('data-lang') || 'text'
+        const filename = getDownloadFilename(lang)
+
+        const blob = new Blob([text], { type: 'text/plain;charset=utf-8' })
+        const url = URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = filename
+        document.body.appendChild(a)
+        a.click()
+        document.body.removeChild(a)
+        URL.revokeObjectURL(url)
     }
 }
 
