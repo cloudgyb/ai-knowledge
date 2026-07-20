@@ -3,6 +3,7 @@ package com.github.cloudgyb.ai.knowledge.server.modules.kb.controller;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.github.cloudgyb.ai.knowledge.server.modules.commons.ApiResponse;
 import com.github.cloudgyb.ai.knowledge.server.modules.kb.domain.KnowledgeBaseDoc;
+import com.github.cloudgyb.ai.knowledge.server.modules.kb.dto.HitTestResult;
 import com.github.cloudgyb.ai.knowledge.server.modules.kb.service.KnowledgeBaseDocService;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -64,11 +65,12 @@ public class KnowledgeBaseDocManageController {
      * 命中测试
      *
      * @param kbId 知识库id
+     * @param text 测试文本
      */
     @PostMapping("/test")
-    public ApiResponse<Void> test(@NotNull @RequestParam("kbId") Integer kbId,
-                                  @NotBlank @RequestParam("text") String text) {
-        knowledgeBaseDocService.testDoc(kbId, text);
-        return ApiResponse.success();
+    public ApiResponse<List<HitTestResult>> test(@NotNull @RequestParam("kbId") Integer kbId,
+                                                  @NotBlank @RequestParam("text") String text) {
+        List<HitTestResult> results = knowledgeBaseDocService.testDoc(kbId, text);
+        return ApiResponse.success(results);
     }
 }

@@ -61,3 +61,11 @@ export const DocStatus = {
     VECTORIZED: {text: '已向量化', color: 'blue'},   // 已向量化
     FAILED: {text: '向量化失败', color: 'red'},   // '向量化失败'
 }
+
+// 命中测试结果
+export interface HitTestResult {
+    text: string
+    score: number
+    docId: number
+    docTitle: string
+}

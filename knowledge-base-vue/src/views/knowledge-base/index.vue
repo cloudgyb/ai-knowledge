@@ -236,7 +236,51 @@
               </template>
             </a-card>
           </a-tab-pane>
-          <a-tab-pane key="2" tab="命中测试" force-render>Content of Tab Pane 2</a-tab-pane>
+          <a-tab-pane key="2" tab="命中测试" force-render>
+            <a-card :bordered="false">
+              <a-form layout="inline">
+                <a-form-item label="测试文本">
+                  <a-textarea
+                      v-model:value="hitTestText"
+                      placeholder="请输入要测试的文本内容"
+                      style="width: 500px"
+                      :rows="2"
+                      allow-clear
+                  />
+                </a-form-item>
+                <a-form-item>
+                  <a-button type="primary" @click="handleHitTest" :loading="hitTestLoading">
+                    <template #icon>
+                      <SearchOutlined/>
+                    </template>
+                    测试
+                  </a-button>
+                </a-form-item>
+              </a-form>
+            </a-card>
+            <a-card :bordered="false" style="margin-top: 16px">
+              <a-empty v-if="hitTestResults.length === 0 && !hitTestLoading" description="输入文本后点击测试查看命中结果"/>
+              <div v-else>
+                <div class="hit-test-summary" v-if="hitTestResults.length > 0">
+                  共命中 <a-tag color="blue">{{ hitTestResults.length }}</a-tag> 条结果
+                </div>
+                <div class="hit-test-results">
+                  <a-card v-for="(item, index) in hitTestResults" :key="index" size="small" class="hit-test-card">
+                    <template #title>
+                      <div class="hit-test-card-header">
+                        <span class="hit-test-rank">#{{ index + 1 }}</span>
+                        <a-tag color="blue">{{ item.docTitle }}</a-tag>
+                        <a-tag :color="getScoreColor(item.score)">
+                          相似度：{{ (item.score * 100).toFixed(1) }}%
+                        </a-tag>
+                      </div>
+                    </template>
+                    <div class="hit-test-text">{{ item.text }}</div>
+                  </a-card>
+                </div>
+              </div>
+            </a-card>
+          </a-tab-pane>
         </a-tabs>
       </a-card>
     </a-modal>
@@ -291,7 +335,7 @@ import type {KnowledgeBase} from '@/api/knowledgeBase'
 import {modelApi} from '@/api/model'
 import type {AiModel} from "@/api/model/aiModelTypes";
 import {kbDocApi} from '@/api/kbDoc'
-import {DocStatus, type KnowledgeBaseDoc} from "@/api/model/knowledgeBaseTypes";
+import {DocStatus, type KnowledgeBaseDoc, type HitTestResult} from "@/api/model/knowledgeBaseTypes";
 
 const simpleImage = Empty.PRESENTED_IMAGE_SIMPLE;
 const loading = ref<boolean>(false)
@@ -633,6 +677,41 @@ const handleUpdateDocSubmit = async () => {
     message.error(error.message || '更新文档失败')
   }
 }
+
+// ========== 命中测试 ==========
+const hitTestText = ref<string>('')
+const hitTestLoading = ref<boolean>(false)
+const hitTestResults = ref<HitTestResult[]>([])
+
+const handleHitTest = async () => {
+  if (!hitTestText.value.trim()) {
+    message.warning('请输入测试文本')
+    return
+  }
+  hitTestLoading.value = true
+  hitTestResults.value = []
+  try {
+    const res = await kbDocApi.hitTest(uploadDocFormData.value.kbId, hitTestText.value)
+    if (res.code === '200') {
+      hitTestResults.value = res.data || []
+      if (hitTestResults.value.length === 0) {
+        message.info('未命中任何内容')
+      }
+    }
+  } catch (error: any) {
+    message.error(error.message || '命中测试失败')
+  } finally {
+    hitTestLoading.value = false
+  }
+}
+
+const getScoreColor = (score: number): string => {
+  if (score >= 0.8) return 'green'
+  if (score >= 0.6) return 'blue'
+  if (score >= 0.4) return 'orange'
+  return 'red'
+}
+
 onMounted(() => {
   loadKnowledgeBases()
 })
@@ -688,6 +767,48 @@ onMounted(() => {
 .pagination-container {
   margin-top: 24px;
   text-align: right;
+}
+
+/* 命中测试样式 */
+.hit-test-summary {
+  margin-bottom: 16px;
+  font-size: 14px;
+  color: rgba(0, 0, 0, 0.65);
+}
+
+.hit-test-results {
+  max-height: 500px;
+  overflow-y: auto;
+}
+
+.hit-test-card {
+  margin-bottom: 12px;
+}
+
+.hit-test-card-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.hit-test-rank {
+  font-weight: bold;
+  color: #1677ff;
+  font-size: 16px;
+}
+
+.hit-test-text {
+  font-size: 14px;
+  line-height: 1.6;
+  color: rgba(0, 0, 0, 0.85);
+  white-space: pre-wrap;
+  word-break: break-word;
+  background-color: #fafafa;
+  padding: 12px;
+  border-radius: 6px;
+  border: 1px solid #f0f0f0;
+  max-height: 200px;
+  overflow-y: auto;
 }
 </style>
 <style lang="less">

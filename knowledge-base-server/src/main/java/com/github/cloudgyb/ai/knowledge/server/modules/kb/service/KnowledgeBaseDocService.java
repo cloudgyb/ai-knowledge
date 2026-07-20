@@ -12,6 +12,7 @@ import com.github.cloudgyb.ai.knowledge.server.modules.kb.DocStatus;
 import com.github.cloudgyb.ai.knowledge.server.modules.kb.DocType;
 import com.github.cloudgyb.ai.knowledge.server.modules.kb.domain.KnowledgeBase;
 import com.github.cloudgyb.ai.knowledge.server.modules.kb.domain.KnowledgeBaseDoc;
+import com.github.cloudgyb.ai.knowledge.server.modules.kb.dto.HitTestResult;
 import com.github.cloudgyb.ai.knowledge.server.modules.kb.mapper.KnowledgeBaseDocMapper;
 import com.github.cloudgyb.ai.knowledge.server.modules.rag.EmbeddingModelFactory;
 import com.github.cloudgyb.ai.knowledge.server.modules.rag.EmbeddingStoreFactory;
@@ -274,7 +275,7 @@ public class KnowledgeBaseDocService extends ServiceImpl<KnowledgeBaseDocMapper,
         embeddingStore.removeAll(MetadataFilterBuilder.metadataKey("docId").isEqualTo(id));
     }
 
-    public void testDoc(@NotNull Integer kbId, @NotBlank String text) {
+    public List<HitTestResult> testDoc(@NotNull Integer kbId, @NotBlank String text) {
         KnowledgeBase knowledgeBase = knowledgeBaseService.getById(kbId);
         if (knowledgeBase == null) {
             throw new BusinessException("知识库不存在");
@@ -288,23 +289,42 @@ public class KnowledgeBaseDocService extends ServiceImpl<KnowledgeBaseDocMapper,
         if (!AiModelType.VECTOR.name().equals(modelType)) {
             throw new BusinessException("知识库AI向量模型类型不正确！");
         }
+        // 获取知识库下所有文档ID
+        List<Integer> docIds = listIdsByKbId(kbId);
+        if (docIds.isEmpty()) {
+            return List.of();
+        }
+        // 构建文档ID到标题的映射
+        List<KnowledgeBaseDoc> docs = list(new LambdaQueryWrapper<KnowledgeBaseDoc>()
+                .select(KnowledgeBaseDoc::getId, KnowledgeBaseDoc::getTitle)
+                .in(KnowledgeBaseDoc::getId, docIds));
+        java.util.Map<Integer, String> docTitleMap = new java.util.HashMap<>();
+        for (KnowledgeBaseDoc doc : docs) {
+            docTitleMap.put(doc.getId(), doc.getTitle());
+        }
+
         EmbeddingModel embeddingModel = embeddingModelFactory.create(aiModel);
         Response<Embedding> embedResponse = embeddingModel.embed(text);
         Embedding embedding = embedResponse.content();
         EmbeddingStore<TextSegment> embeddingStore = embeddingStoreFactory.create(embeddingModel.dimension());
-        EmbeddingSearchRequest docId1 = EmbeddingSearchRequest.builder()
+        EmbeddingSearchRequest searchRequest = EmbeddingSearchRequest.builder()
                 .queryEmbedding(embedding)
-                .maxResults(5)
-                .minScore(0.65)
-                .filter(MetadataFilterBuilder.metadataKey("docId").isIn(1))
+                .maxResults(10)
+                .minScore(0.0)
+                .filter(MetadataFilterBuilder.metadataKey("docId").isIn(docIds))
                 .build();
-        EmbeddingSearchResult<TextSegment> result = embeddingStore.search(docId1);
+        EmbeddingSearchResult<TextSegment> result = embeddingStore.search(searchRequest);
         List<EmbeddingMatch<TextSegment>> matches = result.matches();
+
+        List<HitTestResult> hitTestResults = new ArrayList<>();
         for (EmbeddingMatch<TextSegment> match : matches) {
-            String text1 = match.embedded().text();
-            Metadata metadata = match.embedded().metadata();
-            System.out.println(text1 + "  " + metadata.getString("docId"));
+            TextSegment embedded = match.embedded();
+            String matchedText = embedded.text();
+            Integer docId = Integer.valueOf(embedded.metadata().getString("docId"));
+            String docTitle = docTitleMap.getOrDefault(docId, "未知文档");
+            hitTestResults.add(new HitTestResult(matchedText, match.score(), docId, docTitle));
         }
+        return hitTestResults;
     }
 
     public List<Integer> listIdsByKbId(Integer id) {

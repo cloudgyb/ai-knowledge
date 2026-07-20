@@ -1,6 +1,6 @@
 import request from '@/utils/request'
 import type {ApiResponse, ApiResponsePagination} from "@/api/model/types";
-import type {KnowledgeBaseDoc} from "@/api/model/knowledgeBaseTypes";
+import type {HitTestResult, KnowledgeBaseDoc} from "@/api/model/knowledgeBaseTypes";
 
 export const kbDocApi = {
     uploadDoc(formData: FormData): Promise<ApiResponse<any>> {
@@ -32,5 +32,9 @@ export const kbDocApi = {
         formData.append('title', value.title ? value.title + "" : '')
         formData.append('enable', value.enable ? value.enable + "" : "true")
         return request.post('/kb/doc/update', formData)
+    },
+    // 命中测试
+    hitTest(kbId: number, text: string): Promise<ApiResponse<HitTestResult[]>> {
+        return request.post('/kb/doc/test', null, {params: {kbId, text}})
     }
 }
