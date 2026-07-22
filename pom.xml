@@ -41,6 +41,7 @@
     <modules>
         <module>knowledge-base-server</module>
         <module>knowledge-base-gateway</module>
+        <module>knowledge-base-mcp-server</module>
     </modules>
     <dependencyManagement>
         <dependencies>
@@ -97,6 +98,13 @@
                 <groupId>dev.langchain4j</groupId>
                 <artifactId>langchain4j-community-bom</artifactId>
                 <version>1.15.0-beta25</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>io.modelcontextprotocol.sdk</groupId>
+                <artifactId>mcp-bom</artifactId>
+                <version>2.0.0</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
