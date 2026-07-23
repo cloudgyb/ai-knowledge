@@ -34,7 +34,7 @@ public class McpServerConfiguration {
         return new ServletRegistrationBean<>(httpServletStreamableServerTransportProvider, "/mcp");
     }
 
-    @Bean
+    @Bean(destroyMethod = "closeGracefully")
     public McpAsyncServer mcpServer(HttpServletStreamableServerTransportProvider httpServletStreamableServerTransportProvider) {
         McpAsyncServer mcpAsyncServer = McpServer.async(httpServletStreamableServerTransportProvider)
                 .serverInfo(McpSchema.Implementation.builder("MCP Server", "0.0.1").build())

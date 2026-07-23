@@ -1,2 +1,5 @@
 server:
   port: 8080
+logging:
+  level:
+    com.github.cloudgyb.ai.knowledge.mcp.config.McpServerToolAssembler: DEBUG
