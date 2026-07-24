@@ -76,8 +76,16 @@ public class McpServerToolAssembler implements ApplicationContextAware, BeanPost
                             for (Parameter parameter : parameters) {
                                 argumentsList.add(arguments.get(parameter.getName()));
                             }
-                            ReflectionUtils.invokeMethod(method, bean, argumentsList.toArray(new Object[0]));
-                            return Mono.just(McpSchema.CallToolResult.builder().isError(false).addTextContent("test success").build());
+                            try {
+                                Object res = ReflectionUtils.invokeMethod(method, bean, argumentsList.toArray(new Object[0]));
+                                if (res == null) {
+                                    return Mono.just(McpSchema.CallToolResult.builder().isError(false).build());
+                                }
+                                return Mono.just(McpSchema.CallToolResult.builder().isError(false).addTextContent(res.toString()).build());
+                            } catch (Exception e) {
+                                logger.error("Error calling tool [{}] with arguments [{}]", name, arguments, e);
+                                return Mono.just(McpSchema.CallToolResult.builder().isError(true).addTextContent(e.getMessage()).build());
+                            }
                         }).build();
                 if (logger.isDebugEnabled()) {
                     logger.debug("Adding tool [{}] to MCP server", name);
