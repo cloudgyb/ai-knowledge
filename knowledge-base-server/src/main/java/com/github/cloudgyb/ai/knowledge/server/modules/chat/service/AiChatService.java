@@ -16,6 +16,10 @@ import com.github.cloudgyb.ai.knowledge.server.modules.kb.service.KnowledgeBaseS
 import com.github.cloudgyb.ai.knowledge.server.modules.rag.EmbeddingModelFactory;
 import com.github.cloudgyb.ai.knowledge.server.modules.rag.EmbeddingStoreFactory;
 import dev.langchain4j.data.segment.TextSegment;
+import dev.langchain4j.mcp.McpToolProvider;
+import dev.langchain4j.mcp.client.DefaultMcpClient;
+import dev.langchain4j.mcp.client.McpClient;
+import dev.langchain4j.mcp.client.transport.http.StreamableHttpMcpTransport;
 import dev.langchain4j.memory.chat.MessageWindowChatMemory;
 import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.chat.StreamingChatModel;
@@ -26,6 +30,7 @@ import dev.langchain4j.rag.content.aggregator.ReRankingContentAggregator;
 import dev.langchain4j.rag.content.retriever.EmbeddingStoreContentRetriever;
 import dev.langchain4j.service.AiServices;
 import dev.langchain4j.service.TokenStream;
+import dev.langchain4j.service.tool.ToolProvider;
 import dev.langchain4j.store.embedding.EmbeddingStore;
 import dev.langchain4j.store.embedding.filter.MetadataFilterBuilder;
 import lombok.extern.slf4j.Slf4j;
@@ -35,6 +40,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.io.IOException;
+import java.time.Duration;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -193,6 +199,25 @@ public class AiChatService {
             systemMessage = "你是一个知识库问答助手，你的名字：AI 小助手；请根据知识库内容回答问题。" +
                     "请使用中文回答，并尽量详细。格式必须是正确 markdown 格式。";
         }
+        StreamableHttpMcpTransport streamableHttpMcpTransport = StreamableHttpMcpTransport.builder()
+                .logRequests(true)
+                .logResponses(true)
+                .setHttpVersion1_1()
+                .url("http://localhost:9000/mcp")
+                //.subsidiaryChannel(true)
+                .timeout(Duration.ofSeconds(10))
+                .build();
+        McpClient mcpClient = DefaultMcpClient.builder()
+                .transport(streamableHttpMcpTransport)
+                .key("mcp-01")
+                .pingTimeout(Duration.ofSeconds(8))
+                .build();
+        McpToolProvider mcpToolProvider = McpToolProvider.builder()
+                .mcpClients(mcpClient)
+                .toolNameMapper((client, toolSpecification) ->
+                        client.key() + "_" + toolSpecification.name()
+                )
+                .build();
         Assistant assistant = aiServicesBuilder
                 .systemMessage(systemMessage)
                 .chatMemory(MessageWindowChatMemory.builder()
@@ -200,6 +225,7 @@ public class AiChatService {
                         .maxMessages(PersistentChatMemoryStore.maxMessages)
                         .chatMemoryStore(persistentChatMemoryStore).build())
                 .tools(new WeatherQueryTool())
+                .toolProvider(mcpToolProvider)
                 .build();
         TokenStream stream = assistant.chat(text);
         List<Long> ids = initMsg(cid, text);// 插入聊天消息

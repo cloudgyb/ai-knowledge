@@ -8,7 +8,6 @@ public class TestTool {
 
     @McpTool(name = "add", description = "将两个数相加")
     public int add(int a, int b) {
-        System.out.println(a + b);
         return a + b;
     }
 }
