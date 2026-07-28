@@ -153,6 +153,7 @@ public class AiChatModelFactory {
                 .maxTokens(aiModelConfig.getTokens())
                 .temperature(aiModelConfig.getTemperature())
                 .topP(aiModelConfig.getTalk())
+                .returnThinking(true)
                 .build();
     }
 
@@ -205,6 +206,8 @@ public class AiChatModelFactory {
                 .modelName(aiModel.getModelName())
                 .temperature(aiModelConfig.getTemperature())
                 .topP(aiModelConfig.getTalk())
+                .think(true)
+                .returnThinking(true)
                 .build();
     }
 

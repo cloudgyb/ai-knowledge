@@ -89,6 +89,10 @@
             <groupId>dev.langchain4j</groupId>
             <artifactId>langchain4j</artifactId>
         </dependency>
+        <dependency>
+            <groupId>dev.langchain4j</groupId>
+            <artifactId>langchain4j-mcp</artifactId>
+        </dependency>
         <!-- 进程内重排序模型 -->
         <dependency>
             <groupId>dev.langchain4j</groupId>
