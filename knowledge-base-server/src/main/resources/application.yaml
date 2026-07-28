@@ -1,5 +1,8 @@
 server:
   port: 8000
+  tomcat:
+    connection-timeout: 10000
+    keep-alive-timeout: 30000
 
 spring:
   application:

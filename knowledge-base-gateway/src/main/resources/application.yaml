@@ -24,11 +24,18 @@ spring:
           #    enabled: true
           #  reactive-load-balancer-client:
           #    enabled: true
+          httpclient:
+            connect-timeout: 10000
+            response-timeout: 30s
+            pool:
+              max-idle-time: 10s
           routes:
             - id: knowledge-base-service
               uri: lb://knowledge-base-server
               predicates:
                 - Path=/api/**
+              metadata:
+                response-timeout: 0 # 禁用响应超时，避免 SSE 中断
               filters:
                 - name: StripPrefix
                   args: {
