@@ -35,7 +35,7 @@ spring:
               predicates:
                 - Path=/api/**
               metadata:
-                response-timeout: 0 # 禁用响应超时，避免 SSE 中断
+                response-timeout: -1 # 禁用响应超时，避免 SSE 中断
               filters:
                 - name: StripPrefix
                   args: {
