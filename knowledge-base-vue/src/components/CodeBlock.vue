@@ -31,6 +31,7 @@
 <script setup lang="ts">
 import {ref, computed, onMounted, onUnmounted} from 'vue'
 import hljs from 'highlight.js'
+import {copyToClipboard} from '@/utils/clipboard'
 
 // 防抖函数
 function debounce<T extends (...args: any[]) => any>(
@@ -192,7 +193,7 @@ const handleDownload = () => {
 // 复制代码
 const handleCopy = async () => {
   try {
-    await window.copyToClipboard(props.code)
+    await copyToClipboard(props.code)
     isCopied.value = true
     setTimeout(() => {
       isCopied.value = false

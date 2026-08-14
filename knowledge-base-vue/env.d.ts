@@ -42,7 +42,3 @@ declare module 'domhandler' {
     }
 }
 
-interface Window {
-    copyToClipboard: (text: string) => Promise<void>
-}
-

@@ -18,6 +18,29 @@
                                 :content="message.content"
                                 :streaming="message.isLoading"/>
               </article>
+              <!-- AI 回复操作栏：复制 / 导出 Markdown 内容 -->
+              <div v-if="message.role === 'assistant' && !message.isLoading && message.content"
+                   class="message-actions">
+                <a-button
+                    size="small"
+                    type="text"
+                    class="action-btn"
+                    :title="copiedIndex === index ? '已复制' : '复制 Markdown 内容'"
+                    @click="handleCopyMarkdown(message, index)">
+                  <CheckOutlined v-if="copiedIndex === index" class="copied-icon"/>
+                  <CopyOutlined v-else/>
+                  <span>{{ copiedIndex === index ? '已复制' : '复制' }}</span>
+                </a-button>
+                <a-button
+                    size="small"
+                    type="text"
+                    class="action-btn"
+                    title="导出 Markdown 文件"
+                    @click="handleExportMarkdown(message)">
+                  <DownloadOutlined/>
+                  <span>导出</span>
+                </a-button>
+              </div>
             </div>
           </div>
         </div>
@@ -60,7 +83,7 @@
 <script setup lang="ts">
 import {ref, onMounted, nextTick, watch, inject, type Ref} from 'vue'
 import {message, type SelectProps} from 'ant-design-vue'
-import {SendOutlined} from '@ant-design/icons-vue'
+import {SendOutlined, CopyOutlined, CheckOutlined, DownloadOutlined} from '@ant-design/icons-vue'
 import {knowledgeBaseApi} from '@/api/knowledgeBase'
 import {chatApi} from '@/api/chat'
 import type {KnowledgeBase} from '@/api/knowledgeBase'
@@ -69,6 +92,7 @@ import {useInputMsgStore} from "@/stores/userInputMsg";
 import Markdown from '@/components/Markdown/index.vue'
 import StreamMarkdown from '@/components/Markdown/StreamMarkdown.vue'
 import {createEventSource} from '@/utils/request'
+import {copyToClipboard} from '@/utils/clipboard'
 import 'highlight.js/styles/github.min.css'
 import '@/assets/styles/markdown.css'
 
@@ -123,6 +147,54 @@ const currentCid = ref('')
 const chatMessages = ref<ChatMessage[]>([])
 const inputMessage = ref('')
 const isStreaming = ref(false)
+// 记录刚复制过的消息索引，用于按钮反馈
+const copiedIndex = ref(-1)
+
+// 复制 AI 回复的 Markdown 内容
+const handleCopyMarkdown = async (msg: ChatMessage, index: number) => {
+  try {
+    await copyToClipboard(msg.content)
+    copiedIndex.value = index
+    message.success('Markdown 内容已复制')
+    setTimeout(() => {
+      if (copiedIndex.value === index) {
+        copiedIndex.value = -1
+      }
+    }, 2000)
+  } catch (err) {
+    console.error('复制失败:', err)
+    message.error('复制失败，请重试')
+  }
+}
+
+// 导出 AI 回复的 Markdown 内容为 .md 文件
+const handleExportMarkdown = (msg: ChatMessage) => {
+  try {
+    if (!msg.content) {
+      message.warning('暂无内容可导出')
+      return
+    }
+    // 生成带时间戳的文件名
+    const now = new Date()
+    const pad = (n: number) => n.toString().padStart(2, '0')
+    const timestamp = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`
+    const filename = `AI回复_${timestamp}.md`
+
+    const blob = new Blob([msg.content], {type: 'text/markdown;charset=utf-8'})
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = filename
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+    message.success('Markdown 文件已导出')
+  } catch (err) {
+    console.error('导出失败:', err)
+    message.error('导出失败，请重试')
+  }
+}
 
 // 聊天记录滚动容器
 const chatMessagesRef = ref<HTMLElement>()
@@ -351,6 +423,39 @@ onMounted(() => {
 .message.assistant .message-bubble {
   background: #fff;
   color: rgba(0, 0, 0, 0.85);
+}
+
+/* AI 回复操作栏 */
+.message-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 2px;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.message.assistant .message-bubble:hover .message-actions {
+  opacity: 1;
+}
+
+.action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: #57606a;
+  padding: 0 6px;
+  height: 24px;
+  border-radius: 4px;
+}
+
+.action-btn:hover {
+  color: #1890ff;
+  background-color: rgba(24, 144, 255, 0.08);
+}
+
+.copied-icon {
+  color: #52c41a;
 }
 
 .chat-input {
