@@ -4,7 +4,7 @@
     <a-layout-header class="header">
       <div class="header-content">
         <div class="logo">
-          <h1 class="system-title">基于 AI RAG 的在线知识库</h1>
+          <h1 class="system-title">{{AppConfig.title}}</h1>
         </div>
         <div class="user-menu">
           <a-dropdown v-if="userStore.userInfo">
@@ -75,6 +75,7 @@ import {
 } from '@ant-design/icons-vue'
 import {authApi} from '@/api/auth'
 import {message} from 'ant-design-vue'
+import {AppConfig} from "@/utils/env.ts";
 
 const router = useRouter()
 const userStore = useUserStore()
