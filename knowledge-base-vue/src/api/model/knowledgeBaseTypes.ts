@@ -62,6 +62,13 @@ export const DocStatus = {
     FAILED: {text: '向量化失败', color: 'red'},   // '向量化失败'
 }
 
+/**
+ * 根据状态获取文档状态信息，未知状态返回默认值
+ */
+export const getDocStatus = (status: string): {text: string, color: string} => {
+    return DocStatus[status as keyof typeof DocStatus] || {text: '未知', color: 'default'}
+}
+
 // 命中测试结果
 export interface HitTestResult {
     text: string

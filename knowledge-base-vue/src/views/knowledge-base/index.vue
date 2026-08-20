@@ -161,7 +161,7 @@
         <a-tabs v-model:activeKey="docManageTabActiveKey" tabPosition="left">
           <a-tab-pane key="1" tab="文档管理">
             <a-card :bordered="false">
-              <a-form ref="docSearchFormRef" :model="docSearchFormData" layout="inline">
+              <a-form :model="docSearchFormData" layout="inline">
                 <a-form-item label="文档名称" name="title">
                   <a-input v-model:value="docSearchFormData.title" placeholder="请输入文档名称" style="width: 200px"/>
                 </a-form-item>
@@ -214,8 +214,8 @@
                     <div>
                       <span>更新时间：{{ formatTime(doc.updateTime || doc.createTime) }}</span><br>
                       <a-tag color="blue">{{ doc.fileType }}</a-tag>
-                      <a-tag :color="DocStatus[doc.status].color">
-                        {{ DocStatus[doc.status].text || '未知' }}
+                      <a-tag :color="getDocStatus(doc.status).color">
+                        {{ getDocStatus(doc.status).text }}
                       </a-tag>
                     </div>
                   </a-card>
@@ -335,7 +335,7 @@ import type {KnowledgeBase} from '@/api/knowledgeBase'
 import {modelApi} from '@/api/model'
 import type {AiModel} from "@/api/model/aiModelTypes";
 import {kbDocApi} from '@/api/kbDoc'
-import {DocStatus, type KnowledgeBaseDoc, type HitTestResult} from "@/api/model/knowledgeBaseTypes";
+import {getDocStatus, type KnowledgeBaseDoc, type HitTestResult} from "@/api/model/knowledgeBaseTypes";
 
 const simpleImage = Empty.PRESENTED_IMAGE_SIMPLE;
 const loading = ref<boolean>(false)
@@ -392,7 +392,7 @@ const formRules = {
   remark: [{required: false, message: '请输入知识库描述', trigger: 'blur'}]
 }
 // 加载AI向量模型
-const AiVectorModels = ref<AiModel[]>([{}])
+const AiVectorModels = ref<AiModel[]>([])
 const loadAiVectorModels = async () => {
   try {
     const res = await modelApi.getList(
@@ -533,7 +533,6 @@ const showDocModel = (kb: KnowledgeBase) => {
   loadDocList()
 }
 const docManageTabActiveKey = ref<string>('1')
-const docSearchFormRef = ref()
 const docSearchFormData = ref<any>({
   title: ''
 })
@@ -599,7 +598,7 @@ const uploadDocFormRules = {
     {max: 20, message: '文档标题长度不能超过20个字符', trigger: 'blur'}],
   fileList: [{required: true, message: '请选择文件', trigger: 'change'},
     {
-      validator: (rule: any, value: any) => {
+      validator: (_rule: any, value: any) => {
         for (let file of value) {
           if (file.size > 10 * 1024 * 1024) {
             return Promise.reject(new Error('文件不能超过10M'))
